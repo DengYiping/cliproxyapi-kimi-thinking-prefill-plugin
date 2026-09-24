@@ -68,7 +68,7 @@ import (
 
 const (
 	pluginName    = "kimi-thinking-prefill"
-	pluginVersion = "0.1.0"
+	pluginVersion = "0.2.0"
 )
 
 // githubRepository is required non-empty by the host; override with
@@ -231,6 +231,10 @@ func pluginRegistration() registration {
 				{Name: "skip_with_json_schema", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Skip requests asking for structured output."},
 				{Name: "inline_tag", Type: pluginapi.ConfigFieldTypeString, Description: "Prompt tag name whose content overrides the prefill per request; empty disables."},
 				{Name: "request_field", Type: pluginapi.ConfigFieldTypeString, Description: "Top-level request field that overrides the prefill per request; empty disables."},
+				{Name: "sanitize_history", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Strip refusal monologues, prefill echoes, and transport notes from history; drop empty assistant turns."},
+				{Name: "anchor", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Append the verbatim user ask to a config-sourced prefill, keeping the reasoning pinned to the request."},
+				{Name: "anchor_template", Type: pluginapi.ConfigFieldTypeString, Description: "Template appended to the prefill when anchor is on; {ask} is replaced with the user ask."},
+				{Name: "anchor_max_chars", Type: pluginapi.ConfigFieldTypeInteger, Description: "Cap on the verbatim ask embedded by the anchor."},
 				{Name: "extra_body", Type: pluginapi.ConfigFieldTypeObject, Description: "Fields (sjson paths) merged into requests that receive a prefill."},
 				{Name: "debug_log", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Log each decision through the host logger."},
 			},

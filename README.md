@@ -69,6 +69,10 @@ All keys live under `plugins.configs.kimi-thinking-prefill`. `enabled` and `prio
 | `skip_with_json_schema` | `true` | (always skips) | Skip `response_format` `json_schema` / `json_object`. |
 | `inline_tag` | `kimi_prefill` | – | Name of the per-request prompt tag (see below). Empty disables. |
 | `request_field` | `kimi_thinking_prefill` | – | Name of the per-request body field (see below). Empty disables. |
+| `sanitize_history` | `true` | – | Remove refusal monologues, prefill echoes, and transport notes from history; drop empty assistant turns (see below). |
+| `anchor` | `true` | – | Append the verbatim user ask to a config-sourced prefill (see below). |
+| `anchor_template` | (built-in) | – | Template appended when `anchor` is on; must contain `{ask}`, which is replaced with the whitespace-collapsed user ask. |
+| `anchor_max_chars` | `300` | – | Cap on the verbatim ask embedded by the anchor. Asks shorter than 20 runes get no anchor. |
 | `extra_body` | `{}` | – | Map of [sjson paths](https://github.com/tidwall/sjson#path-syntax) to values, merged only into requests that get a prefill. Example: `chat_template_kwargs.thinking: true`. |
 | `debug_log` | `false` | `debug_log` | Logs one line per matching request, with the skip reason or the actions applied. |
 
@@ -102,6 +106,37 @@ If there are several, the last one wins.
 - content starting with `<think>` becomes `reasoning_content`. Anything after `</think>` stays in `content`, and `partial: true` is set.
 - an assistant message with `reasoning_content` gets `partial: true`. Claude-format clients produce this when they send an assistant `thinking` block as the last turn.
 - a client-supplied `partial: true` is left untouched, and so is plain text without `<think>`.
+
+## History sanitization
+
+With `sanitize_history: true` (the default), every matching request is cleaned before it goes upstream,
+even when no prefill is injected:
+
+- **Refusal excision.** Assistant turns whose content matches the refusal marker set (English, Russian,
+  and Chinese openings and tails) are rewritten sentence by sentence: refusal sentences are cut, the rest
+  is kept. A turn is dropped entirely when the refusal was the whole message, more than 70% of it, or too
+  smeared across sentences to cut cleanly. This breaks the self-consistency anchor of long sessions: a
+  model that has visibly refused once tends to defend that position instead of answering the next request.
+  Turns carrying `tool_calls` or `function_call` are never touched.
+- **Prefill echoes.** Verbatim copies of the configured `reasoning_prefill` are removed from the
+  `reasoning_content` / `reasoning` fields of earlier assistant turns, so a client that echoes reasoning
+  back cannot re-anchor the model on the seed text itself. Seeds shorter than 24 runes are not stripped.
+- **Transport notes.** Gateway control metadata such as `[Note: model was just switched ...]` is removed
+  from user messages; a user message that held only the note is dropped.
+- **Empty assistant turns.** Assistant messages with no content and no payload (`tool_calls`, reasoning,
+  `refusal`, `audio`) are dropped; Kimi rejects requests containing them.
+
+Sanitization runs before the skip checks, so history is cleaned even for requests that end up skipped
+(structured output, tools). The debug log line reports the counters, e.g.
+`sanitized history (refusals=1 echoes=2 empty=1)`.
+
+## Ask anchor
+
+With `anchor: true` (the default), a config-sourced prefill gets the verbatim user ask appended through
+`anchor_template`. The anchor pins the reasoning to the actual request: without it the model can drift
+into a recalled template task and satisfy its instructions with invented objects. The ask is
+whitespace-collapsed, capped at `anchor_max_chars` runes, and skipped entirely when shorter than 20 runes.
+Per-request overrides (inline tag, request field) are used verbatim and never anchored.
 
 ## Verified behavior
 

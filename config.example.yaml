@@ -33,6 +33,16 @@ plugins:
       # Per-request override via a top-level body field: string seed, or false to
       # disable. The field is always removed. Empty disables.
       request_field: "kimi_thinking_prefill"
+      # Strip refusal monologues, prefill echoes, and transport notes from history;
+      # drop empty assistant turns. Applies to every matching request, even skipped ones.
+      sanitize_history: true
+      # Append the verbatim user ask to a config-sourced prefill, keeping the
+      # reasoning pinned to the request. Overrides are used verbatim.
+      anchor: true
+      # Template appended when anchor is on; must contain {ask}.
+      # anchor_template: " The ask, verbatim: \u00ab{ask}\u00bb. ..."
+      # Cap on the verbatim ask embedded by the anchor.
+      anchor_max_chars: 300
       # Extra fields (sjson paths) merged only into requests that get a prefill.
       extra_body: {}
       # Log each decision (skips and actions) through the host logger.

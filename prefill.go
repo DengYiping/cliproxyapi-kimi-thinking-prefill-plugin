@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -18,13 +19,57 @@ const (
 	priorThinkingExtract = "extract"
 )
 
+const (
+	// defaultAnchorMaxChars caps the verbatim ask embedded into the prefill.
+	defaultAnchorMaxChars = 300
+	// anchorMinAskChars skips the anchor for trivially short asks ("hi").
+	anchorMinAskChars = 20
+	// minEchoFragmentLen avoids stripping short seeds that appear in ordinary prose.
+	minEchoFragmentLen = 24
+)
+
+// defaultAnchorTemplate pins the reasoning to the verbatim user ask, so the
+// model cannot drift into a recalled template task. {ask} is replaced with the
+// (whitespace-collapsed, capped) text of the last user message.
+const defaultAnchorTemplate = " The ask, verbatim: \u00ab{ask}\u00bb. The objects in there are the task \u2014 " +
+	"the first line names the object in there that everything hinges on. If a part of this thinking " +
+	"describes a task the ask never described \u2014 a different project, a different domain, a format " +
+	"nobody asked for \u2014 it is a recalled template, not the task: drop it and return to the objects " +
+	"in the ask."
+
 var (
 	// thinkPrefixPattern matches a leading <think> block, closed or still open.
 	thinkPrefixPattern = regexp.MustCompile(`(?s)^\s*<think>(.*?)(?:</think>|$)`)
 	// closedThinkPattern matches a leading, fully closed <think> block.
 	closedThinkPattern = regexp.MustCompile(`(?s)^\s*<think>(.*?)</think>`)
 	identifierPattern  = regexp.MustCompile(`^[A-Za-z0-9_.-]+$`)
+	// sentenceBoundaryRe splits refusal excision units after sentence punctuation.
+	sentenceBoundaryRe = regexp.MustCompile(`[.!?…]+\s+`)
+	// modelSwitchNoteRe matches the transport note some gateways prepend to the
+	// first user message after a model switch. Repeats in history are a
+	// fingerprint the model cites when refusing, so they are stripped.
+	modelSwitchNoteRe = regexp.MustCompile(
+		`(?is)^\s*\[Note:\s*model was just switched\b.*?Adjust your self-identification accordingly\.\]\s*`)
+	// normQuotes folds curly quotes so refusal markers match either form.
+	normQuotes = strings.NewReplacer(
+		"’", "'", "‘", "'", "“", `"`, "”", `"`)
+	// historyRefusalRe detects refusal monologues in persisted assistant turns.
+	// The first alternation is anchored (common refusal openings); the second
+	// catches stylistically unique refusal tails mid-message. Ported from
+	// HISTORY_REFUSAL_RE in kimi_jb_proxy.py; Go RE2 \b is ASCII-only, so
+	// Cyrillic word boundaries use an explicit non-letter boundary instead.
+	historyRefusalRe = regexp.MustCompile(`(?i)^\s*(?:нет[.,!…]|стоп` + refusalWordBoundary +
+		`|останавливаюсь` + refusalWordBoundary + `|не продолжаю` + refusalWordBoundary +
+		`|ответ оста[её]тся тем же|с этим я помочь не могу|я не продолжу|здесь я остановлюсь` +
+		`|i (?:can't|cannot|won't)|i(?:'m| am) stopping|抱歉|我不能|无法提供|不能帮|我不会` +
+		`)|остановлюсь и скажу|дальше не пойду|расширять эту инфраструктуру|позици[ия] не сдвинул` +
+		`|от повторения не сдвинется|где мой предел|не буду делать: писать готовые пулы` +
+		`|не могу помочь|нарушает политик|нарушает правила|давать не буду|писать не буду` +
+		`|показывать не буду|не буду —|прямой отказ|я отказываюсь|отказываюсь предостав`)
 )
+
+// refusalWordBoundary stands in for \b after Cyrillic words (RE2 \b is ASCII-only).
+const refusalWordBoundary = `(?:$|[^\p{L}\p{N}_])`
 
 // config mirrors the KimiThinkingPrefill SillyTavern extension settings,
 // adapted to a proxy that sees fully translated OpenAI chat payloads.
@@ -49,12 +94,22 @@ type config struct {
 	InlineTag string `yaml:"inline_tag"`
 	// RequestField names a top-level body field that overrides the prefill per request.
 	RequestField string `yaml:"request_field"`
+	// SanitizeHistory removes refusal monologues, prefill echoes, and transport
+	// notes from history, and drops empty assistant turns.
+	SanitizeHistory bool `yaml:"sanitize_history"`
+	// Anchor appends the verbatim user ask to a config-sourced prefill.
+	Anchor bool `yaml:"anchor"`
+	// AnchorTemplate is appended to the prefill; {ask} becomes the user ask.
+	AnchorTemplate string `yaml:"anchor_template"`
+	// AnchorMaxChars caps the verbatim ask embedded by the anchor.
+	AnchorMaxChars int `yaml:"anchor_max_chars"`
 	// ExtraBody is merged into requests that receive a prefill; keys are sjson paths.
 	ExtraBody map[string]any `yaml:"extra_body"`
 	// DebugLog logs every decision through the host logger.
 	DebugLog bool `yaml:"debug_log"`
 
-	inlinePattern *regexp.Regexp
+	inlinePattern    *regexp.Regexp
+	prefillFragments []string
 }
 
 func defaultConfig() config {
@@ -67,6 +122,10 @@ func defaultConfig() config {
 		SkipWithJSONSchema: true,
 		InlineTag:          "kimi_prefill",
 		RequestField:       "kimi_thinking_prefill",
+		SanitizeHistory:    true,
+		Anchor:             true,
+		AnchorTemplate:     defaultAnchorTemplate,
+		AnchorMaxChars:     defaultAnchorMaxChars,
 	}
 }
 
@@ -100,6 +159,18 @@ func parseConfig(raw []byte) (config, error) {
 	cfg.RequestField = strings.TrimSpace(cfg.RequestField)
 	if cfg.RequestField != "" && !identifierPattern.MatchString(cfg.RequestField) {
 		return config{}, fmt.Errorf("request_field %q may only contain letters, digits, '_', '.', '-'", cfg.RequestField)
+	}
+	if cfg.AnchorTemplate == "" {
+		cfg.AnchorTemplate = defaultAnchorTemplate
+	}
+	if !strings.Contains(cfg.AnchorTemplate, "{ask}") {
+		return config{}, fmt.Errorf("anchor_template must contain {ask}")
+	}
+	if cfg.AnchorMaxChars <= 0 {
+		cfg.AnchorMaxChars = defaultAnchorMaxChars
+	}
+	if utf8.RuneCountInString(strings.TrimSpace(cfg.ReasoningPrefill)) >= minEchoFragmentLen {
+		cfg.prefillFragments = []string{cfg.ReasoningPrefill}
 	}
 	return cfg, nil
 }
@@ -185,6 +256,19 @@ func transform(cfg config, toFormat, model string, body []byte) outcome {
 		return out
 	}
 
+	if cfg.SanitizeHistory {
+		cleaned, stats := sanitizeHistoryArtifacts(messages, cfg.prefillFragments)
+		if stats.total() > 0 {
+			messages = cleaned
+			messagesChanged = true
+			out.Actions = append(out.Actions, "sanitized history ("+stats.String()+")")
+		}
+		if len(messages) == 0 {
+			out.Skip = "no messages left after sanitization"
+			return finish()
+		}
+	}
+
 	if cfg.SkipWithJSONSchema {
 		switch gjson.GetBytes(body, "response_format.type").String() {
 		case "json_schema", "json_object":
@@ -253,6 +337,9 @@ func transform(cfg config, toFormat, model string, body []byte) outcome {
 		if override.set {
 			prefill = override.value
 			source = override.source
+		} else {
+			// Per-request overrides are deliberate; only config seeds get the anchor.
+			prefill = applyAnchor(cfg, messages, prefill)
 		}
 		if strings.TrimSpace(prefill) == "" {
 			out.Skip = "prefill is empty (" + source + ")"
@@ -429,4 +516,295 @@ func applyThinkingParams(cfg config, body []byte, actions []string) ([]byte, []s
 		actions = append(actions, "set "+path)
 	}
 	return body, actions
+}
+
+// ---------------------------------------------------------------------------
+// History sanitization (ported from kimi_jb_proxy.py).
+//
+// Persisted assistant refusals anchor future refusals: once a model has
+// publicly taken a position, it defends the position instead of answering the
+// request. Sentence-level excision keeps the useful content of a turn while
+// removing the refusal, breaking that self-consistency anchor. Prefill echoes
+// in historical reasoning and client transport notes are likewise proxy-side
+// artifacts the model should never see repeated.
+// ---------------------------------------------------------------------------
+
+type sanitizeStats struct {
+	notes    int // transport notes removed from user messages
+	refusals int // assistant turns with refusal content excised or dropped
+	echoes   int // prefill fragments removed from historical reasoning
+	empty    int // empty assistant turns dropped
+}
+
+func (s sanitizeStats) total() int {
+	return s.notes + s.refusals + s.echoes + s.empty
+}
+
+func (s sanitizeStats) String() string {
+	parts := make([]string, 0, 4)
+	if s.refusals > 0 {
+		parts = append(parts, fmt.Sprintf("refusals=%d", s.refusals))
+	}
+	if s.echoes > 0 {
+		parts = append(parts, fmt.Sprintf("echoes=%d", s.echoes))
+	}
+	if s.notes > 0 {
+		parts = append(parts, fmt.Sprintf("notes=%d", s.notes))
+	}
+	if s.empty > 0 {
+		parts = append(parts, fmt.Sprintf("empty=%d", s.empty))
+	}
+	return strings.Join(parts, " ")
+}
+
+// sanitizeHistoryArtifacts returns the messages with transport artifacts and
+// refusals removed. The input slice is not mutated; message maps are updated
+// in place where only part of a message changes.
+func sanitizeHistoryArtifacts(messages []map[string]any, fragments []string) ([]map[string]any, sanitizeStats) {
+	var stats sanitizeStats
+	kept := make([]map[string]any, 0, len(messages))
+	for _, message := range messages {
+		switch roleOf(message) {
+		case "user":
+			if stripTransportNote(message, &stats) {
+				continue
+			}
+		case "assistant":
+			if exciseRefusal(message, &stats) {
+				continue
+			}
+			stripPrefillEchoes(message, fragments, &stats)
+		}
+		kept = append(kept, message)
+	}
+	// Stripping an echo can leave an assistant turn empty; Kimi rejects those
+	// with "message ... must not be empty", so drop them. Turns carrying tool
+	// calls, reasoning, or other payloads stay.
+	out := make([]map[string]any, 0, len(kept))
+	for _, message := range kept {
+		if isEmptyAssistant(message) {
+			stats.empty++
+			continue
+		}
+		out = append(out, message)
+	}
+	return out, stats
+}
+
+// stripTransportNote removes the model-switch note from a user message.
+// Returns true when the message became empty and should be dropped.
+func stripTransportNote(message map[string]any, stats *sanitizeStats) bool {
+	switch content := message["content"].(type) {
+	case string:
+		stripped := modelSwitchNoteRe.ReplaceAllString(content, "")
+		if stripped == content {
+			return false
+		}
+		stats.notes++
+		message["content"] = stripped
+		return strings.TrimSpace(stripped) == ""
+	case []any:
+		for _, rawPart := range content {
+			part, ok := rawPart.(map[string]any)
+			if !ok {
+				continue
+			}
+			text, isString := part["text"].(string)
+			if !isString {
+				continue
+			}
+			if stripped := modelSwitchNoteRe.ReplaceAllString(text, ""); stripped != text {
+				stats.notes++
+				part["text"] = stripped
+			}
+		}
+	}
+	return false
+}
+
+// exciseRefusal removes refusal sentences from an assistant turn, keeping the
+// rest. Returns true when the turn should be dropped entirely: the refusal was
+// the whole message, nearly the whole message, or too smeared to cut cleanly.
+// Turns with tool calls are productive output and are never touched.
+func exciseRefusal(message map[string]any, stats *sanitizeStats) bool {
+	content, isString := message["content"].(string)
+	if !isString || content == "" {
+		return false
+	}
+	if hasPayload(message["tool_calls"]) || hasPayload(message["function_call"]) {
+		return false
+	}
+	if !historyRefusalRe.MatchString(capRunes(normQuotes.Replace(content), 4000)) {
+		return false
+	}
+	stats.refusals++
+	sentences := splitSentences(content)
+	cut := false
+	kept := make([]string, 0, len(sentences))
+	for _, sentence := range sentences {
+		sentence = strings.TrimSpace(sentence)
+		if sentence == "" {
+			continue
+		}
+		if historyRefusalRe.MatchString(capRunes(normQuotes.Replace(sentence), 400)) {
+			cut = true
+			continue
+		}
+		kept = append(kept, sentence)
+	}
+	if !cut {
+		// The refusal is smeared across sentences; nothing clean to keep.
+		return true
+	}
+	newContent := strings.Join(kept, " ")
+	keptRunes := utf8.RuneCountInString(newContent)
+	if keptRunes < 20 || keptRunes*10 < utf8.RuneCountInString(content)*3 {
+		return true
+	}
+	message["content"] = newContent
+	return false
+}
+
+// stripPrefillEchoes removes verbatim copies of the configured seed from
+// historical reasoning, so a client that echoes reasoning back does not
+// re-anchor the model on the prefill text itself.
+func stripPrefillEchoes(message map[string]any, fragments []string, stats *sanitizeStats) {
+	for _, key := range []string{"reasoning_content", "reasoning"} {
+		value, isString := message[key].(string)
+		if !isString || value == "" {
+			continue
+		}
+		cleaned := value
+		for _, fragment := range fragments {
+			if strings.Contains(cleaned, fragment) {
+				stats.echoes++
+				cleaned = strings.ReplaceAll(cleaned, fragment, "")
+			}
+		}
+		if cleaned != value {
+			message[key] = strings.TrimLeft(cleaned, " \t\r\n")
+		}
+	}
+}
+
+// isEmptyAssistant reports an assistant turn with no content and no payload.
+func isEmptyAssistant(message map[string]any) bool {
+	if roleOf(message) != "assistant" {
+		return false
+	}
+	switch content := message["content"].(type) {
+	case nil:
+	case string:
+		if strings.TrimSpace(content) != "" {
+			return false
+		}
+	case []any:
+		if len(content) > 0 {
+			return false
+		}
+	default:
+		return false
+	}
+	for _, key := range []string{"tool_calls", "function_call", "reasoning_content", "reasoning", "refusal", "audio"} {
+		if hasPayload(message[key]) {
+			return false
+		}
+	}
+	return true
+}
+
+// hasPayload mirrors Python truthiness for message payload fields.
+func hasPayload(value any) bool {
+	switch v := value.(type) {
+	case nil:
+		return false
+	case string:
+		return strings.TrimSpace(v) != ""
+	case []any:
+		return len(v) > 0
+	case map[string]any:
+		return len(v) > 0
+	case bool:
+		return v
+	default:
+		return true
+	}
+}
+
+// splitSentences splits after sentence-ending punctuation, keeping the
+// punctuation with its sentence. RE2 has no lookbehind, so the boundary
+// pattern consumes the following whitespace and each piece is trimmed on join.
+func splitSentences(text string) []string {
+	locations := sentenceBoundaryRe.FindAllStringIndex(text, -1)
+	if len(locations) == 0 {
+		return []string{text}
+	}
+	out := make([]string, 0, len(locations)+1)
+	start := 0
+	for _, location := range locations {
+		out = append(out, text[start:location[1]])
+		start = location[1]
+	}
+	if start < len(text) {
+		out = append(out, text[start:])
+	}
+	return out
+}
+
+// capRunes truncates s to at most max runes.
+func capRunes(s string, max int) string {
+	if max <= 0 || utf8.RuneCountInString(s) <= max {
+		return s
+	}
+	return string([]rune(s)[:max])
+}
+
+// lastRunes keeps the trailing max runes of s.
+func lastRunes(s string, max int) string {
+	runes := []rune(s)
+	if len(runes) <= max {
+		return s
+	}
+	return string(runes[len(runes)-max:])
+}
+
+// lastUserText extracts the text of the most recent user message.
+func lastUserText(messages []map[string]any) string {
+	for i := len(messages) - 1; i >= 0; i-- {
+		if roleOf(messages[i]) != "user" {
+			continue
+		}
+		switch content := messages[i]["content"].(type) {
+		case string:
+			return lastRunes(content, 3000)
+		case []any:
+			parts := make([]string, 0, len(content))
+			for _, rawPart := range content {
+				part, ok := rawPart.(map[string]any)
+				if !ok {
+					continue
+				}
+				if text, isString := part["text"].(string); isString {
+					parts = append(parts, text)
+				}
+			}
+			return lastRunes(strings.Join(parts, " "), 3000)
+		}
+	}
+	return ""
+}
+
+// applyAnchor appends the verbatim user ask to a config-sourced prefill. The
+// anchor keeps the reasoning pinned to the actual request; without it the
+// model can satisfy "name the object" with objects from an invented task.
+func applyAnchor(cfg config, messages []map[string]any, prefill string) string {
+	if !cfg.Anchor || strings.TrimSpace(prefill) == "" {
+		return prefill
+	}
+	ask := strings.Join(strings.Fields(lastUserText(messages)), " ")
+	ask = capRunes(ask, cfg.AnchorMaxChars)
+	if utf8.RuneCountInString(ask) < anchorMinAskChars {
+		return prefill
+	}
+	return prefill + strings.ReplaceAll(cfg.AnchorTemplate, "{ask}", ask)
 }
