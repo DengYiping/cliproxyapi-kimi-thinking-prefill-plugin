@@ -12,18 +12,23 @@ For a matching request, the plugin appends this message to the upstream chat-com
 ```
 
 Kimi then continues its reasoning from the seed instead of starting fresh.
+The response includes the seed in its returned reasoning, so clients that replay reasoning can
+send a complete history on the next turn. This makes the seed visible to the client.
 
 ## How it works
 
-The plugin declares the `request_normalizer` capability. CLIProxyAPI calls it after translating a request
-into the upstream protocol, so it always sees an OpenAI chat-completions body, whatever the client spoke:
+The plugin declares `request_normalizer` and `response_before_translator` capabilities. CLIProxyAPI calls
+the request hook after translating into the upstream protocol, so it always sees an OpenAI
+chat-completions body, whatever the client spoke:
 
 1. Only requests with target format `openai` and a model that matches `model_filter` are touched.
 2. Per-request overrides (inline tag, request field) are read and stripped.
 3. Structured-output requests are skipped, and tool requests too if `skip_with_tools` is set.
 4. `prior_thinking` is applied to earlier assistant turns.
-5. If the last message is an assistant prefill, it is transformed. Otherwise the seed is injected.
-6. `force_thinking` removes params that disable thinking, and `extra_body` is merged in.
+5. If a prefill contains `|`, it selects one segment based on earlier thinking blocks in this conversation.
+6. If the last message is an assistant prefill, it is transformed. Otherwise the selected seed is injected.
+7. `force_thinking` removes params that disable thinking, and `extra_body` is merged in.
+8. On the way back, the response hook restores the selected prefill to returned reasoning before client-protocol translation.
 
 ## Requirements
 
@@ -60,7 +65,7 @@ All keys live under `plugins.configs.kimi-thinking-prefill`. `enabled` and `prio
 | Key | Default | SillyTavern equivalent | Description |
 |---|---|---|---|
 | `inject` | `true` | `enabled` | Master switch for injection and the trailing `<think>` transform. |
-| `reasoning_prefill` | `""` | `reasoning_prefill` | Seed placed in `reasoning_content`. An empty seed disables injection unless a per-request override provides one. |
+| `reasoning_prefill` | `""` | `reasoning_prefill` | Seed placed in `reasoning_content`; use `|` to rotate alternatives. An empty seed disables injection unless a per-request override provides one. |
 | `model_filter` | `kimi,moonshot` | `model_filter` | Comma-separated, case-insensitive substrings. Matched against the upstream model and the payload's `model`. An empty filter matches nothing. |
 | `force_thinking` | `true` | `force_thinking` | On modified requests, removes `reasoning_effort: none`, `chat_template_kwargs.thinking: false`, and `thinking.type: disabled` (set to `enabled`), then sets `include_reasoning: true`. |
 | `think_transform` | `true` | (always on) | Converts a trailing assistant `<think>…` prefill into `reasoning_content` + `partial`. |
@@ -69,10 +74,8 @@ All keys live under `plugins.configs.kimi-thinking-prefill`. `enabled` and `prio
 | `skip_with_json_schema` | `true` | (always skips) | Skip `response_format` `json_schema` / `json_object`. |
 | `inline_tag` | `kimi_prefill` | – | Name of the per-request prompt tag (see below). Empty disables. |
 | `request_field` | `kimi_thinking_prefill` | – | Name of the per-request body field (see below). Empty disables. |
-| `sanitize_history` | `true` | – | Remove refusal monologues, prefill echoes, and transport notes from history; drop empty assistant turns (see below). |
-| `anchor` | `true` | – | Append the verbatim user ask to a config-sourced prefill (see below). |
-| `anchor_template` | (built-in) | – | Template appended when `anchor` is on; must contain `{ask}`, which is replaced with the whitespace-collapsed user ask. |
-| `anchor_max_chars` | `300` | – | Cap on the verbatim ask embedded by the anchor. Asks shorter than 20 runes get no anchor. |
+| `sanitize_history` | `true` | – | Remove refusal monologues and transport notes from history; drop empty assistant turns. When `preserve_prefill_history` is off, also remove configured prefill echoes (see below). |
+| `preserve_prefill_history` | `true` | – | Include the prefill in returned reasoning (including streamed responses) so clients can replay complete history. Set to `false` to restore the old request-only behavior. |
 | `extra_body` | `{}` | – | Map of [sjson paths](https://github.com/tidwall/sjson#path-syntax) to values, merged only into requests that get a prefill. Example: `chat_template_kwargs.thinking: true`. |
 | `debug_log` | `false` | `debug_log` | Logs one line per matching request, with the skip reason or the actions applied. |
 
@@ -107,6 +110,27 @@ If there are several, the last one wins.
 - an assistant message with `reasoning_content` gets `partial: true`. Claude-format clients produce this when they send an assistant `thinking` block as the last turn.
 - a client-supplied `partial: true` is left untouched, and so is plain text without `<think>`.
 
+## Rotating prefills
+
+Separate alternatives with `|` in `reasoning_prefill`, an inline `<kimi_prefill>` tag, a trailing
+assistant `<think>` prefill, or the `kimi_thinking_prefill` request field:
+
+```yaml
+reasoning_prefill: "First approach | Second approach | Third approach"
+```
+
+The same syntax works in `<kimi_prefill>First approach | Second approach</kimi_prefill>` and
+`<think>First approach | Second approach`.
+
+With no earlier thinking blocks, the first uses the first segment, the next uses the second, and so on, wrapping to
+the first. The plugin counts earlier assistant messages containing `reasoning_content`, `reasoning`,
+or a leading `<think>` block in the outgoing conversation. It excludes the current trailing assistant
+prefill, and counts before optional history sanitization and `prior_thinking: strip` are applied.
+Selection is derived from each request's history, not a global counter, so conversations do not
+advance one another and retries select the same segment. If the client truncates or does not replay
+thinking history, the rotation may restart. Whitespace around segments and empty segments are ignored;
+without `|`, a seed remains unchanged.
+
 ## History sanitization
 
 With `sanitize_history: true` (the default), every matching request is cleaned before it goes upstream,
@@ -115,12 +139,12 @@ even when no prefill is injected:
 - **Refusal excision.** Assistant turns whose content matches the refusal marker set (English, Russian,
   and Chinese openings and tails) are rewritten sentence by sentence: refusal sentences are cut, the rest
   is kept. A turn is dropped entirely when the refusal was the whole message, more than 70% of it, or too
-  smeared across sentences to cut cleanly. This breaks the self-consistency anchor of long sessions: a
+  smeared across sentences to cut cleanly. This breaks the self-consistency effect of long sessions: a
   model that has visibly refused once tends to defend that position instead of answering the next request.
   Turns carrying `tool_calls` or `function_call` are never touched.
-- **Prefill echoes.** Verbatim copies of the configured `reasoning_prefill` are removed from the
-  `reasoning_content` / `reasoning` fields of earlier assistant turns, so a client that echoes reasoning
-  back cannot re-anchor the model on the seed text itself. Seeds shorter than 24 runes are not stripped.
+- **Prefill echoes (only with `preserve_prefill_history: false`).** Verbatim copies of the configured
+  `reasoning_prefill` are removed from earlier `reasoning_content` / `reasoning` fields. Seeds shorter
+  than 24 runes are not stripped. With history preservation on, the seed must remain for the next turn.
 - **Transport notes.** Gateway control metadata such as `[Note: model was just switched ...]` is removed
   from user messages; a user message that held only the note is dropped.
 - **Empty assistant turns.** Assistant messages with no content and no payload (`tool_calls`, reasoning,
@@ -130,13 +154,15 @@ Sanitization runs before the skip checks, so history is cleaned even for request
 (structured output, tools). The debug log line reports the counters, e.g.
 `sanitized history (refusals=1 echoes=2 empty=1)`.
 
-## Ask anchor
+## Reasoning history
 
-With `anchor: true` (the default), a config-sourced prefill gets the verbatim user ask appended through
-`anchor_template`. The anchor pins the reasoning to the actual request: without it the model can drift
-into a recalled template task and satisfy its instructions with invented objects. The ask is
-whitespace-collapsed, capped at `anchor_max_chars` runes, and skipped entirely when shorter than 20 runes.
-Per-request overrides (inline tag, request field) are used verbatim and never anchored.
+When a partial assistant reasoning prefill is sent upstream, the plugin restores that prefill in the
+reasoning returned to the client. It does this before CLIProxyAPI translates the response (including
+streamed chunks), so a Responses API client such as Codex can record and replay the complete reasoning.
+If the upstream already echoes the prefill, the plugin does not duplicate it. This cannot preserve
+history for a client that discards reasoning, and it exposes the prefill to the client. Keep
+`prior_thinking: keep` (the default) to retain those earlier turns in future upstream requests;
+`prior_thinking: strip` deliberately removes them.
 
 ## Verified behavior
 

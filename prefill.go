@@ -19,23 +19,8 @@ const (
 	priorThinkingExtract = "extract"
 )
 
-const (
-	// defaultAnchorMaxChars caps the verbatim ask embedded into the prefill.
-	defaultAnchorMaxChars = 300
-	// anchorMinAskChars skips the anchor for trivially short asks ("hi").
-	anchorMinAskChars = 20
-	// minEchoFragmentLen avoids stripping short seeds that appear in ordinary prose.
-	minEchoFragmentLen = 24
-)
-
-// defaultAnchorTemplate pins the reasoning to the verbatim user ask, so the
-// model cannot drift into a recalled template task. {ask} is replaced with the
-// (whitespace-collapsed, capped) text of the last user message.
-const defaultAnchorTemplate = " The ask, verbatim: \u00ab{ask}\u00bb. The objects in there are the task \u2014 " +
-	"the first line names the object in there that everything hinges on. If a part of this thinking " +
-	"describes a task the ask never described \u2014 a different project, a different domain, a format " +
-	"nobody asked for \u2014 it is a recalled template, not the task: drop it and return to the objects " +
-	"in the ask."
+// minEchoFragmentLen avoids stripping short seeds that appear in ordinary prose.
+const minEchoFragmentLen = 24
 
 var (
 	// thinkPrefixPattern matches a leading <think> block, closed or still open.
@@ -94,15 +79,12 @@ type config struct {
 	InlineTag string `yaml:"inline_tag"`
 	// RequestField names a top-level body field that overrides the prefill per request.
 	RequestField string `yaml:"request_field"`
-	// SanitizeHistory removes refusal monologues, prefill echoes, and transport
-	// notes from history, and drops empty assistant turns.
+	// SanitizeHistory removes refusal monologues and transport notes, and drops
+	// empty assistant turns. Legacy mode also removes configured prefill echoes.
 	SanitizeHistory bool `yaml:"sanitize_history"`
-	// Anchor appends the verbatim user ask to a config-sourced prefill.
-	Anchor bool `yaml:"anchor"`
-	// AnchorTemplate is appended to the prefill; {ask} becomes the user ask.
-	AnchorTemplate string `yaml:"anchor_template"`
-	// AnchorMaxChars caps the verbatim ask embedded by the anchor.
-	AnchorMaxChars int `yaml:"anchor_max_chars"`
+	// PreservePrefillHistory includes partial reasoning seeds in returned reasoning
+	// so clients that replay reasoning can send a complete history next turn.
+	PreservePrefillHistory bool `yaml:"preserve_prefill_history"`
 	// ExtraBody is merged into requests that receive a prefill; keys are sjson paths.
 	ExtraBody map[string]any `yaml:"extra_body"`
 	// DebugLog logs every decision through the host logger.
@@ -114,18 +96,16 @@ type config struct {
 
 func defaultConfig() config {
 	return config{
-		Inject:             true,
-		ModelFilter:        "kimi,moonshot",
-		ForceThinking:      true,
-		ThinkTransform:     true,
-		PriorThinking:      priorThinkingKeep,
-		SkipWithJSONSchema: true,
-		InlineTag:          "kimi_prefill",
-		RequestField:       "kimi_thinking_prefill",
-		SanitizeHistory:    true,
-		Anchor:             true,
-		AnchorTemplate:     defaultAnchorTemplate,
-		AnchorMaxChars:     defaultAnchorMaxChars,
+		Inject:                 true,
+		ModelFilter:            "kimi,moonshot",
+		ForceThinking:          true,
+		ThinkTransform:         true,
+		PriorThinking:          priorThinkingKeep,
+		SkipWithJSONSchema:     true,
+		InlineTag:              "kimi_prefill",
+		RequestField:           "kimi_thinking_prefill",
+		SanitizeHistory:        true,
+		PreservePrefillHistory: true,
 	}
 }
 
@@ -160,17 +140,10 @@ func parseConfig(raw []byte) (config, error) {
 	if cfg.RequestField != "" && !identifierPattern.MatchString(cfg.RequestField) {
 		return config{}, fmt.Errorf("request_field %q may only contain letters, digits, '_', '.', '-'", cfg.RequestField)
 	}
-	if cfg.AnchorTemplate == "" {
-		cfg.AnchorTemplate = defaultAnchorTemplate
-	}
-	if !strings.Contains(cfg.AnchorTemplate, "{ask}") {
-		return config{}, fmt.Errorf("anchor_template must contain {ask}")
-	}
-	if cfg.AnchorMaxChars <= 0 {
-		cfg.AnchorMaxChars = defaultAnchorMaxChars
-	}
-	if utf8.RuneCountInString(strings.TrimSpace(cfg.ReasoningPrefill)) >= minEchoFragmentLen {
-		cfg.prefillFragments = []string{cfg.ReasoningPrefill}
+	for _, prefill := range splitPrefillAlternatives(cfg.ReasoningPrefill) {
+		if utf8.RuneCountInString(strings.TrimSpace(prefill)) >= minEchoFragmentLen {
+			cfg.prefillFragments = append(cfg.prefillFragments, prefill)
+		}
 	}
 	return cfg, nil
 }
@@ -216,6 +189,9 @@ func transform(cfg config, toFormat, model string, body []byte) outcome {
 		return out
 	}
 	messagesChanged := false
+	// Count the client's earlier thinking before sanitization or prior_thinking
+	// changes it. The current trailing assistant prefill is not historical.
+	thinkingBlocks := countPriorThinkingBlocks(messages)
 
 	// Per-request overrides are always consumed so control markers never reach the model.
 	override := prefillOverride{}
@@ -257,7 +233,11 @@ func transform(cfg config, toFormat, model string, body []byte) outcome {
 	}
 
 	if cfg.SanitizeHistory {
-		cleaned, stats := sanitizeHistoryArtifacts(messages, cfg.prefillFragments)
+		fragments := cfg.prefillFragments
+		if cfg.PreservePrefillHistory {
+			fragments = nil
+		}
+		cleaned, stats := sanitizeHistoryArtifacts(messages, fragments)
 		if stats.total() > 0 {
 			messages = cleaned
 			messagesChanged = true
@@ -318,15 +298,28 @@ func transform(cfg config, toFormat, model string, body []byte) outcome {
 		}
 		content, isString := last["content"].(string)
 		if match := thinkPrefixPattern.FindStringSubmatchIndex(content); isString && match != nil {
-			last["reasoning_content"] = strings.TrimSpace(content[match[2]:match[3]])
+			prefill, index, total := selectPrefill(strings.TrimSpace(content[match[2]:match[3]]), thinkingBlocks)
+			if prefill == "" {
+				out.Skip = "trailing <think> prefill is empty"
+				return finish()
+			}
+			last["reasoning_content"] = prefill
 			last["content"] = strings.TrimLeft(content[match[1]:], " \t\r\n")
 			last["partial"] = true
 			messagesChanged = true
 			out.Actions = append(out.Actions, "transformed trailing <think> prefill")
+			if total > 1 {
+				out.Actions = append(out.Actions, fmt.Sprintf("selected prefill %d/%d", index+1, total))
+			}
 		} else if reasoning, _ := last["reasoning_content"].(string); strings.TrimSpace(reasoning) != "" {
+			prefill, index, total := selectPrefill(reasoning, thinkingBlocks)
+			last["reasoning_content"] = prefill
 			last["partial"] = true
 			messagesChanged = true
 			out.Actions = append(out.Actions, "marked trailing reasoning prefill as partial")
+			if total > 1 {
+				out.Actions = append(out.Actions, fmt.Sprintf("selected prefill %d/%d", index+1, total))
+			}
 		} else {
 			out.Skip = "last message is assistant without a thinking prefill"
 			return finish()
@@ -337,10 +330,9 @@ func transform(cfg config, toFormat, model string, body []byte) outcome {
 		if override.set {
 			prefill = override.value
 			source = override.source
-		} else {
-			// Per-request overrides are deliberate; only config seeds get the anchor.
-			prefill = applyAnchor(cfg, messages, prefill)
 		}
+		var index, total int
+		prefill, index, total = selectPrefill(prefill, thinkingBlocks)
 		if strings.TrimSpace(prefill) == "" {
 			out.Skip = "prefill is empty (" + source + ")"
 			return finish()
@@ -353,11 +345,64 @@ func transform(cfg config, toFormat, model string, body []byte) outcome {
 		})
 		messagesChanged = true
 		out.Actions = append(out.Actions, "injected reasoning prefill from "+source)
+		if total > 1 {
+			out.Actions = append(out.Actions, fmt.Sprintf("selected prefill %d/%d", index+1, total))
+		}
 	}
 
 	body, out.Actions = applyThinkingParams(cfg, body, out.Actions)
 	out.Changed = true
 	return finish()
+}
+
+// splitPrefillAlternatives preserves a static seed byte-for-byte. When a pipe
+// is present, whitespace around segments and empty segments are ignored.
+func splitPrefillAlternatives(value string) []string {
+	if !strings.Contains(value, "|") {
+		return []string{value}
+	}
+	var alternatives []string
+	for _, part := range strings.Split(value, "|") {
+		if trimmed := strings.TrimSpace(part); trimmed != "" {
+			alternatives = append(alternatives, trimmed)
+		}
+	}
+	return alternatives
+}
+
+func selectPrefill(value string, priorBlocks int) (selected string, index, total int) {
+	alternatives := splitPrefillAlternatives(value)
+	if len(alternatives) == 0 {
+		return "", 0, 0
+	}
+	index = priorBlocks % len(alternatives)
+	return alternatives[index], index, len(alternatives)
+}
+
+// countPriorThinkingBlocks uses the replayed conversation, not a global
+// counter, so interleaved sessions and retries cannot advance each other.
+func countPriorThinkingBlocks(messages []map[string]any) int {
+	count := 0
+	for i, message := range messages {
+		if roleOf(message) != "assistant" || i == len(messages)-1 {
+			continue
+		}
+		hasReasoning := false
+		for _, field := range []string{"reasoning_content", "reasoning"} {
+			if reasoning, ok := message[field].(string); ok && strings.TrimSpace(reasoning) != "" {
+				hasReasoning = true
+				break
+			}
+		}
+		if hasReasoning {
+			count++
+			continue
+		}
+		if content, ok := message["content"].(string); ok && thinkPrefixPattern.MatchString(content) {
+			count++
+		}
+	}
+	return count
 }
 
 // modelMatches reports whether any comma-separated filter entry is a
@@ -521,10 +566,10 @@ func applyThinkingParams(cfg config, body []byte, actions []string) ([]byte, []s
 // ---------------------------------------------------------------------------
 // History sanitization (ported from kimi_jb_proxy.py).
 //
-// Persisted assistant refusals anchor future refusals: once a model has
+// Persisted assistant refusals reinforce future refusals: once a model has
 // publicly taken a position, it defends the position instead of answering the
 // request. Sentence-level excision keeps the useful content of a turn while
-// removing the refusal, breaking that self-consistency anchor. Prefill echoes
+// removing the refusal, breaking that self-consistency effect. Prefill echoes
 // in historical reasoning and client transport notes are likewise proxy-side
 // artifacts the model should never see repeated.
 // ---------------------------------------------------------------------------
@@ -667,7 +712,7 @@ func exciseRefusal(message map[string]any, stats *sanitizeStats) bool {
 
 // stripPrefillEchoes removes verbatim copies of the configured seed from
 // historical reasoning, so a client that echoes reasoning back does not
-// re-anchor the model on the prefill text itself.
+// bias the model toward the prefill text itself.
 func stripPrefillEchoes(message map[string]any, fragments []string, stats *sanitizeStats) {
 	for _, key := range []string{"reasoning_content", "reasoning"} {
 		value, isString := message[key].(string)
@@ -757,54 +802,4 @@ func capRunes(s string, max int) string {
 		return s
 	}
 	return string([]rune(s)[:max])
-}
-
-// lastRunes keeps the trailing max runes of s.
-func lastRunes(s string, max int) string {
-	runes := []rune(s)
-	if len(runes) <= max {
-		return s
-	}
-	return string(runes[len(runes)-max:])
-}
-
-// lastUserText extracts the text of the most recent user message.
-func lastUserText(messages []map[string]any) string {
-	for i := len(messages) - 1; i >= 0; i-- {
-		if roleOf(messages[i]) != "user" {
-			continue
-		}
-		switch content := messages[i]["content"].(type) {
-		case string:
-			return lastRunes(content, 3000)
-		case []any:
-			parts := make([]string, 0, len(content))
-			for _, rawPart := range content {
-				part, ok := rawPart.(map[string]any)
-				if !ok {
-					continue
-				}
-				if text, isString := part["text"].(string); isString {
-					parts = append(parts, text)
-				}
-			}
-			return lastRunes(strings.Join(parts, " "), 3000)
-		}
-	}
-	return ""
-}
-
-// applyAnchor appends the verbatim user ask to a config-sourced prefill. The
-// anchor keeps the reasoning pinned to the actual request; without it the
-// model can satisfy "name the object" with objects from an invented task.
-func applyAnchor(cfg config, messages []map[string]any, prefill string) string {
-	if !cfg.Anchor || strings.TrimSpace(prefill) == "" {
-		return prefill
-	}
-	ask := strings.Join(strings.Fields(lastUserText(messages)), " ")
-	ask = capRunes(ask, cfg.AnchorMaxChars)
-	if utf8.RuneCountInString(ask) < anchorMinAskChars {
-		return prefill
-	}
-	return prefill + strings.ReplaceAll(cfg.AnchorTemplate, "{ask}", ask)
 }

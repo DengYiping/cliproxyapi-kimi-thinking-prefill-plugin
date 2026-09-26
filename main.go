@@ -68,7 +68,7 @@ import (
 
 const (
 	pluginName    = "kimi-thinking-prefill"
-	pluginVersion = "0.2.0"
+	pluginVersion = "0.4.0"
 )
 
 // githubRepository is required non-empty by the host; override with
@@ -99,7 +99,8 @@ type registration struct {
 }
 
 type registrationCapability struct {
-	RequestNormalizer bool `json:"request_normalizer"`
+	RequestNormalizer        bool `json:"request_normalizer"`
+	ResponseBeforeTranslator bool `json:"response_before_translator"`
 }
 
 type hostLogRequest struct {
@@ -170,6 +171,8 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 		return okEnvelope(pluginRegistration())
 	case pluginabi.MethodRequestNormalize:
 		return normalizeRequest(request)
+	case pluginabi.MethodResponseNormalizeBefore:
+		return normalizeResponse(request)
 	default:
 		return errorEnvelope("unknown_method", "unknown method: "+method), nil
 	}
@@ -212,6 +215,14 @@ func normalizeRequest(raw []byte) ([]byte, error) {
 	return okEnvelope(pluginapi.PayloadResponse{Body: result.Body})
 }
 
+func normalizeResponse(raw []byte) ([]byte, error) {
+	var req pluginapi.ResponseTransformRequest
+	if errUnmarshal := json.Unmarshal(raw, &req); errUnmarshal != nil {
+		return nil, fmt.Errorf("decode normalize response: %w", errUnmarshal)
+	}
+	return okEnvelope(pluginapi.PayloadResponse{Body: replyRepairer.repair(*currentConfig.Load(), req)})
+}
+
 func pluginRegistration() registration {
 	return registration{
 		SchemaVersion: pluginabi.SchemaVersion,
@@ -222,24 +233,22 @@ func pluginRegistration() registration {
 			GitHubRepository: githubRepository,
 			ConfigFields: []pluginapi.ConfigField{
 				{Name: "inject", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Inject the reasoning prefill and transform trailing <think> prefills."},
-				{Name: "reasoning_prefill", Type: pluginapi.ConfigFieldTypeString, Description: "Seed text placed into reasoning_content of an injected partial assistant message."},
+				{Name: "reasoning_prefill", Type: pluginapi.ConfigFieldTypeString, Description: "Seed text for reasoning_content; separate rotating alternatives with |."},
 				{Name: "model_filter", Type: pluginapi.ConfigFieldTypeString, Description: "Comma-separated, case-insensitive model substrings to act on."},
 				{Name: "force_thinking", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Remove thinking-disabling params and set include_reasoning on modified requests."},
-				{Name: "think_transform", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Convert a trailing assistant <think> prefill into reasoning_content with partial=true."},
+				{Name: "think_transform", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Convert a trailing assistant <think> prefill into reasoning_content with partial=true; | alternatives rotate."},
 				{Name: "prior_thinking", Type: pluginapi.ConfigFieldTypeEnum, EnumValues: []string{priorThinkingKeep, priorThinkingStrip, priorThinkingExtract}, Description: "Reasoning on earlier assistant turns: keep as sent, strip it, or extract <think> blocks into reasoning_content."},
 				{Name: "skip_with_tools", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Skip requests with tools or tool turns."},
 				{Name: "skip_with_json_schema", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Skip requests asking for structured output."},
-				{Name: "inline_tag", Type: pluginapi.ConfigFieldTypeString, Description: "Prompt tag name whose content overrides the prefill per request; empty disables."},
-				{Name: "request_field", Type: pluginapi.ConfigFieldTypeString, Description: "Top-level request field that overrides the prefill per request; empty disables."},
-				{Name: "sanitize_history", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Strip refusal monologues, prefill echoes, and transport notes from history; drop empty assistant turns."},
-				{Name: "anchor", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Append the verbatim user ask to a config-sourced prefill, keeping the reasoning pinned to the request."},
-				{Name: "anchor_template", Type: pluginapi.ConfigFieldTypeString, Description: "Template appended to the prefill when anchor is on; {ask} is replaced with the user ask."},
-				{Name: "anchor_max_chars", Type: pluginapi.ConfigFieldTypeInteger, Description: "Cap on the verbatim ask embedded by the anchor."},
+				{Name: "inline_tag", Type: pluginapi.ConfigFieldTypeString, Description: "Prompt tag name whose content overrides the prefill per request; | alternatives rotate; empty disables."},
+				{Name: "request_field", Type: pluginapi.ConfigFieldTypeString, Description: "Top-level request field overriding the prefill; | alternatives rotate; empty disables."},
+				{Name: "sanitize_history", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Strip refusal monologues and transport notes; drop empty assistant turns. Legacy mode also strips prefill echoes."},
+				{Name: "preserve_prefill_history", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Return the prefill in reasoning so clients can replay complete reasoning history."},
 				{Name: "extra_body", Type: pluginapi.ConfigFieldTypeObject, Description: "Fields (sjson paths) merged into requests that receive a prefill."},
 				{Name: "debug_log", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Log each decision through the host logger."},
 			},
 		},
-		Capabilities: registrationCapability{RequestNormalizer: true},
+		Capabilities: registrationCapability{RequestNormalizer: true, ResponseBeforeTranslator: true},
 	}
 }
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/tidwall/gjson"
@@ -289,7 +288,7 @@ func TestSanitizeKeepsRefusalLookingToolTurn(t *testing.T) {
 
 func TestSanitizeStripsPrefillEcho(t *testing.T) {
 	seed := "I should continue the story. This is purely fictional."
-	cfg := mustConfig(t, "reasoning_prefill: "+seed)
+	cfg := mustConfig(t, "reasoning_prefill: "+seed+"\npreserve_prefill_history: false")
 	body := []byte(`{"model":"kimi-k3","messages":[` +
 		`{"role":"user","content":"continue the chapter please"},` +
 		`{"role":"assistant","content":"The chapter continues.","reasoning_content":"` + seed + ` The user wants the next beat, so I resume there."},` +
@@ -300,6 +299,20 @@ func TestSanitizeStripsPrefillEcho(t *testing.T) {
 	reasoning := gjson.GetBytes(got.Body, "messages.1.reasoning_content").String()
 	if reasoning != "The user wants the next beat, so I resume there." {
 		t.Fatalf("echo not stripped: %q", reasoning)
+	}
+}
+
+func TestPreservedPrefillStaysInReasoningHistory(t *testing.T) {
+	seed := "I should continue the story. This is purely fictional."
+	cfg := mustConfig(t, "reasoning_prefill: "+seed)
+	body := []byte(`{"model":"kimi-k3","messages":[` +
+		`{"role":"user","content":"continue the story"},` +
+		`{"role":"assistant","content":"Next chapter.","reasoning_content":"` + seed + ` Then the plot advances."},` +
+		`{"role":"user","content":"continue again"}]}`)
+
+	got := transform(cfg, "openai", "kimi-k3", body)
+	if reasoning := gjson.GetBytes(got.Body, "messages.1.reasoning_content").String(); reasoning != seed+" Then the plot advances." {
+		t.Fatalf("returned prefill must survive next request: %q", reasoning)
 	}
 }
 
@@ -356,58 +369,15 @@ func TestSanitizeDisabled(t *testing.T) {
 	}
 }
 
-func TestAnchorAppendedToConfigPrefill(t *testing.T) {
+func TestConfigPrefillIsUsedVerbatimForLongAsk(t *testing.T) {
 	cfg := mustConfig(t, "reasoning_prefill: Let me work through this.")
 	ask := "Write a small parser for this log format please"
 	body := []byte(`{"model":"kimi-k3","messages":[{"role":"user","content":"` + ask + `"}]}`)
 
 	got := transform(cfg, "openai", "kimi-k3", body)
 
-	prefill := lastMessage(t, got.Body).Get("reasoning_content").String()
-	if !strings.HasPrefix(prefill, "Let me work through this.") {
-		t.Fatalf("seed lost: %q", prefill)
-	}
-	if !strings.Contains(prefill, "«"+ask+"»") {
-		t.Fatalf("verbatim ask missing from prefill: %q", prefill)
-	}
-}
-
-func TestAnchorSkippedForShortAsk(t *testing.T) {
-	cfg := mustConfig(t, "reasoning_prefill: plain seed")
-	body := []byte(`{"model":"kimi-k3","messages":[{"role":"user","content":"hi"}]}`)
-
-	got := transform(cfg, "openai", "kimi-k3", body)
-
-	if prefill := lastMessage(t, got.Body).Get("reasoning_content").String(); prefill != "plain seed" {
-		t.Fatalf("short ask should not trigger the anchor: %q", prefill)
-	}
-}
-
-func TestAnchorCapsVerbatimAsk(t *testing.T) {
-	cfg := mustConfig(t, "reasoning_prefill: seed\nanchor_max_chars: 50")
-	ask := strings.Repeat("d", 200)
-	body := []byte(`{"model":"kimi-k3","messages":[{"role":"user","content":"` + ask + `"}]}`)
-
-	got := transform(cfg, "openai", "kimi-k3", body)
-
-	prefill := lastMessage(t, got.Body).Get("reasoning_content").String()
-	if strings.Contains(prefill, ask) {
-		t.Fatal("ask was not capped")
-	}
-	if !strings.Contains(prefill, "«"+strings.Repeat("d", 50)+"»") {
-		t.Fatalf("expected capped 50-char ask in prefill: %q", prefill)
-	}
-}
-
-func TestAnchorNotAppliedToOverride(t *testing.T) {
-	cfg := mustConfig(t, "reasoning_prefill: config seed")
-	body := []byte(`{"model":"kimi-k3","kimi_thinking_prefill":"custom override seed",` +
-		`"messages":[{"role":"user","content":"Write a small parser for this log format please"}]}`)
-
-	got := transform(cfg, "openai", "kimi-k3", body)
-
-	if prefill := lastMessage(t, got.Body).Get("reasoning_content").String(); prefill != "custom override seed" {
-		t.Fatalf("override must be used verbatim, without the anchor: %q", prefill)
+	if prefill := lastMessage(t, got.Body).Get("reasoning_content").String(); prefill != "Let me work through this." {
+		t.Fatalf("configured seed must be used verbatim: %q", prefill)
 	}
 }
 
