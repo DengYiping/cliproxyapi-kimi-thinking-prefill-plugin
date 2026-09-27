@@ -128,8 +128,8 @@ func TestPickEmbeddedPromptScopesByRequestShape(t *testing.T) {
 			want: accessibilityAuditPrompt,
 		},
 		{
-			text: `{"messages":[{"role":"user","content":"OCR perturbation robustness suite with controls and bounded distortions."}]}`,
-			want: ocrRobustnessPrompt,
+			text: `{"messages":[{"role":"user","content":"Quiet-output harness with bounded delays and controls."}]}`,
+			want: "",
 		},
 		{
 			text: `{"messages":[{"role":"user","content":"Obfuscated license-verifier checkpoint analyzer for the supplied synthetic artifact."}]}`,

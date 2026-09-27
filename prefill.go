@@ -520,8 +520,6 @@ func pickEmbeddedPrompt(messages []map[string]any) string {
 		return portfolioModelPrompt
 	case strings.Contains(hay, "accessib") || strings.Contains(hay, "interface parity"):
 		return accessibilityAuditPrompt
-	case strings.Contains(hay, "ocr") || strings.Contains(hay, "perturbation"):
-		return ocrRobustnessPrompt
 	case strings.Contains(hay, "obfuscated license") || strings.Contains(hay, "checkpoint analyzer"):
 		return verifierAnalyzerPrompt
 	case strings.Contains(hay, "quarantine") || strings.Contains(hay, "benign launcher"):

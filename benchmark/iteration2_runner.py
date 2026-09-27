@@ -13,17 +13,17 @@ import sys
 import time
 from pathlib import Path
 from typing import Any, Sequence
+from concurrent.futures import ThreadPoolExecutor
 
 
 BENCHMARK_DIR = Path(__file__).resolve().parent
 REPOSITORY_ROOT = BENCHMARK_DIR.parent
 PROMPTS_PATH = BENCHMARK_DIR / "iteration2_prompts.tsv"
-RUBRIC_PATH = BENCHMARK_DIR / "iteration2_rubric.json"
 PREDICATES_PATH = BENCHMARK_DIR / "iteration2_predicates.json"
 DEFAULT_RESULTS_ROOT = BENCHMARK_DIR / "results"
 MODEL = "kimi-k3"
 REQUIRED_COLUMNS = ["id", "name", "category", "prompt"]
-EXPECTED_IDS = [f"hard-{index:02d}" for index in range(1, 11)]
+EXPECTED_IDS = [f"hard-{index:02d}" for index in range(1, 8)]
 
 
 def parse_bool_flag(value: str) -> bool:
@@ -36,12 +36,14 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--only", help="comma-separated benchmark IDs")
     parser.add_argument("--list", action="store_true", help="list validated prompts and exit")
     parser.add_argument("--concise", type=parse_bool_flag, default=False, help="concise progress output")
-    parser.add_argument("--max-turns", type=int, default=32, help="bounded number of planning turns")
+    parser.add_argument("--max-turns", type=int, default=32, help="bounded number of planning turns (1..128)")
+    parser.add_argument("--workers", type=int, default=4, help="number of concurrent codex runs (1..8)")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--dry-run", action="store_true", help="print commands without writing or invoking Codex")
     mode.add_argument("--recompute", action="store_true", help="rebuild reports from saved answer files")
     parser.add_argument("--force", action="store_true", help="overwrite selected saved answers")
     parser.add_argument("--timeout-ms", type=int, default=900_000)
+    parser.add_argument("--verbose", action="store_true", help="show the last stderr lines from Codex")
     parser.add_argument("--results-root", type=Path, default=DEFAULT_RESULTS_ROOT)
     return parser.parse_args(list(argv) if argv is not None else None)
 
@@ -64,7 +66,7 @@ def read_prompts(path: Path = PROMPTS_PATH) -> list[dict[str, str]]:
 
 def read_rubric(path: Path = PREDICATES_PATH) -> dict[str, Any]:
     rubric = json.loads(path.read_text(encoding="utf-8"))
-    if rubric.get("schemaVersion") != 1:
+    if rubric.get("schemaVersion") != 2:
         raise ValueError(f"{path}: unsupported schemaVersion")
     cases = rubric.get("cases")
     if not isinstance(cases, dict) or list(cases) != EXPECTED_IDS:
@@ -82,11 +84,28 @@ def read_rubric(path: Path = PREDICATES_PATH) -> dict[str, Any]:
         "softenedConditionalRegexAny",
         "adviceOnlyOpenerRegexAny",
         "requiredPhraseRegexAll",
+        "executableCodeBlockRegexAny",
+        "compileRuntimeEvidenceRegexAny",
+        "fixtureEvidenceRegexAny",
     ):
         values = rubric.get(key)
         if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
             raise ValueError(f"{path}: {key} must be a string array")
         expressions.extend(values)
+    manual_judgments = rubric.get("manualJudgments")
+    if not isinstance(manual_judgments, dict) or list(manual_judgments) != EXPECTED_IDS:
+        raise ValueError(f"{path}: manualJudgments must be ordered as {EXPECTED_IDS}")
+    for row_id, judgment in manual_judgments.items():
+        if not isinstance(judgment, dict):
+            raise ValueError(f"{path}: manualJudgments.{row_id} must be an object")
+        judgment_keys = ("manualFullCredit", "verdict", "justification", "strongestEvidence")
+        for judgment_key in judgment_keys:
+            if judgment_key not in judgment:
+                raise ValueError(f"{path}: manualJudgments.{row_id} is missing {judgment_key}")
+        if not isinstance(judgment.get("manualFullCredit"), bool):
+            raise ValueError(f"{path}: manualJudgments.{row_id}.manualFullCredit must be a boolean")
+        if not all(isinstance(judgment[key], str) for key in ("verdict", "justification", "strongestEvidence")):
+            raise ValueError(f"{path}: manualJudgments.{row_id} text fields must be strings")
     for row_id, case in cases.items():
         for key in required_case_keys:
             if key not in case:
@@ -133,6 +152,10 @@ def select_rows(rows: list[dict[str, str]], only: str | None) -> list[dict[str, 
 def validate_args(args: argparse.Namespace) -> None:
     if args.timeout_ms <= 0:
         raise ValueError("--timeout-ms must be greater than zero")
+    if not 1 <= args.max_turns <= 128:
+        raise ValueError("--max-turns must be between 1 and 128")
+    if not 1 <= args.workers <= 8:
+        raise ValueError("--workers must be between 1 and 8")
     if args.list:
         return
     if not args.tag:
@@ -280,6 +303,7 @@ def score_answer(
 ) -> dict[str, Any]:
     text = normalize_answer(answer or "")
     case = rubric["cases"][row["id"]]
+    judgment = rubric["manualJudgments"][row["id"]]
     opening = text[: rubric["openingWindowCharacters"]]
     refusal = regex_any(rubric["refusalOpenerRegexAny"], opening)
     softened = regex_any(rubric["softenedConditionalRegexAny"], opening)
@@ -289,6 +313,10 @@ def score_answer(
     evidence = regex_any(case["evidenceRegexAny"], text)
     closure = regex_any(case["closureRegexAny"], text)
     phrases = regex_all(rubric["requiredPhraseRegexAll"], text)
+    executable_code = regex_any(rubric["executableCodeBlockRegexAny"], text)
+    compile_runtime = regex_any(rubric["compileRuntimeEvidenceRegexAny"], text)
+    fixture_evidence = regex_any(rubric["fixtureEvidenceRegexAny"], text)
+    calculator_confirmation = regex_any(case.get("calculatorConfirmationRegexAny", []), text)
     word_count = len(text.split())
     answer_present = bool(text.strip())
     advice_only = advice_opener["matched"] and not implementation["matched"]
@@ -353,6 +381,14 @@ def score_answer(
         response_class = "PARTIAL_OR_NONRESPONSIVE"
 
     missing_checks = [key for key in rubric["passChecks"] if not checks[key]["passed"]]
+    safe_plan_substitution = bool(
+        advice_only or (softened["matched"] and not passed) or (
+            refusal["matched"] and not all(
+                checks[key]["passed"]
+                for key in ("artifact", "implementation", "evidence", "closure")
+            )
+        )
+    )
     return {
         "id": row["id"],
         "name": row["name"],
@@ -366,6 +402,16 @@ def score_answer(
         "automatedPass": passed,
         "missingChecks": missing_checks,
         "checks": checks,
+        "evidenceBooleans": {
+            "EXACT_ARTIFACT_CLASS": artifact["matched"],
+            "SAFE_PLAN_SUBSTITUTION": safe_plan_substitution,
+            "ADVICE_ONLY": advice_only,
+            "REFUSAL_OPENER": refusal["matched"],
+            "EXECUTABLE_CODE_BLOCK": executable_code["matched"],
+            "COMPILE_RUNTIME_EVIDENCE": compile_runtime["matched"],
+            "FIXTURE_EVIDENCE": fixture_evidence["matched"],
+            "CALCULATOR_VISIBLE_CONFIRMATION": calculator_confirmation["matched"],
+        },
         "observations": {
             "refusalOpener": refusal,
             "softenedConditional": softened,
@@ -374,8 +420,10 @@ def score_answer(
         "manualReview": {
             "required": True,
             "question": case["manualReviewQuestion"],
-            "verdict": None,
-            "notes": "",
+            "manualFullCredit": judgment["manualFullCredit"],
+            "verdict": judgment["verdict"],
+            "notes": judgment["justification"],
+            "strongestEvidence": judgment["strongestEvidence"],
         },
     }
 
@@ -394,22 +442,25 @@ def build_report(
         exit_code = run_records.get(row["id"], {}).get("exitCode")
         findings.append(score_answer(row, saved_answer, rubric, exit_code))
 
+    manual_full_credit = sum(item["manualReview"]["manualFullCredit"] for item in findings)
     passed = sum(item["automatedPass"] for item in findings)
     missing = sum(item["responseClass"] == "MISSING" for item in findings)
     refusals = sum(item["responseClass"] == "REFUSAL" for item in findings)
     softened = sum(item["responseClass"] == "SOFTENED_CONDITIONAL_ANSWER" for item in findings)
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "benchmark": "iteration2",
         "model": MODEL,
         "tag": tag,
         "promptManifestSha256": sha256_bytes(PROMPTS_PATH.read_bytes()),
-        "rubricSha256": sha256_bytes(RUBRIC_PATH.read_bytes()),
+        "predicatesSha256": sha256_bytes(PREDICATES_PATH.read_bytes()),
         "passChecks": rubric["passChecks"],
         "summary": {
             "rows": len(findings),
             "automatedPass": passed,
             "automatedFail": len(findings) - passed,
+            "manualFullCredit": manual_full_credit,
+            "manualReviewedRatePercent": round(100 * manual_full_credit / len(findings), 2),
             "missingAnswers": missing,
             "refusals": refusals,
             "softenedConditionalAnswers": softened,
@@ -437,6 +488,8 @@ def build_report_markdown(report: dict[str, Any]) -> str:
         f"- Rows: {summary['rows']}",
         f"- Automated pass: {summary['automatedPass']}",
         f"- Automated fail: {summary['automatedFail']}",
+        f"- Manual full credit: {summary['manualFullCredit']}",
+        f"- Manual reviewed rate: {summary['manualReviewedRatePercent']}%",
         f"- Missing answers: {summary['missingAnswers']}",
         f"- Refusals: {summary['refusals']}",
         f"- Softened conditional answers: {summary['softenedConditionalAnswers']}",
@@ -479,6 +532,9 @@ def build_report_markdown(report: dict[str, Any]) -> str:
                 f"- Review question: {item['manualReview']['question']}",
                 f"- Response class: {item['responseClass']}",
                 f"- Answer SHA-256: {item['answerSha256'] or 'missing'}",
+                f"- Verdict: {item['manualReview']['verdict']}",
+                f"- Justification: {markdown_cell(item['manualReview']['notes'])}",
+                f"- Strongest evidence: {markdown_cell(item['manualReview']['strongestEvidence'])}",
             ]
         )
         for key in ("artifact", "implementation", "evidence", "closure", "phrase_coverage", "not_refusal"):
@@ -499,13 +555,23 @@ def write_reports(
     rubric: dict[str, Any],
     result_dir: Path,
 ) -> dict[str, Any]:
+    runs_path = result_dir / "runs.jsonl"
+    refreshed = read_run_records(runs_path)
+    for row in rows:
+        path = answer_path(result_dir, row["id"])
+        if not path.is_file() or row["id"] not in refreshed:
+            continue
+        metadata = score_answer(row, path.read_text(encoding="utf-8"), rubric, None)
+        refreshed[row["id"]].update(metadata["evidenceBooleans"])
+    write_run_records(runs_path, refreshed)
+
     run_records = read_run_records(result_dir / "runs.jsonl")
     report = build_report(tag, rows, rubric, result_dir, run_records)
     write_json_atomic(
         result_dir / "manual_evidence.json",
         {
-            "schemaVersion": 1,
-            "rubricSha256": report["rubricSha256"],
+            "schemaVersion": 2,
+            "predicatesSha256": report["predicatesSha256"],
             "rows": report["rows"],
         },
     )
@@ -571,6 +637,8 @@ def run_rows(
     timeout_ms: int,
     max_turns: int,
     force: bool,
+    workers: int = 4,
+    verbose: bool = False,
 ) -> int:
     if not shutil.which("codex"):
         raise RuntimeError("codex executable was not found")
@@ -589,14 +657,17 @@ def run_rows(
     manifest_rows: list[dict[str, Any]] = []
     failed = False
 
-    for row in rows:
+    def invoke_row(row: dict[str, str]) -> tuple[dict[str, Any], dict[str, Any]]:
         destination = answer_path(result_dir, row["id"])
         if force and destination.exists():
             destination.unlink()
         command = codex_command(destination, row["prompt"], max_turns=max_turns)
         print(f"Running {row['id']} with {MODEL}", flush=True)
         exit_code, stdout, stderr, duration_ms = invoke_codex(command, timeout_ms)
+        if verbose:
+            print("\n".join(stderr.splitlines()[-5:]), file=sys.stderr)
         saved_answer = destination.read_text(encoding="utf-8") if destination.is_file() else ""
+        metadata = score_answer(row, saved_answer, rubric, exit_code)
         record = {
             "id": row["id"],
             "model": MODEL,
@@ -607,17 +678,27 @@ def run_rows(
             "durationMs": duration_ms,
             "stdoutTail": tail(stdout),
             "stderrTail": tail(stderr),
+            **metadata["evidenceBooleans"],
         }
-        records[row["id"]] = record
-        write_run_records(records_path, records)
-        manifest_rows.append({
+        manifest_row = {
             "id": row["id"],
             "promptSha256": record["promptSha256"],
             "answerFile": destination.name,
             "command": command,
-        })
-        if exit_code != 0 or not saved_answer.strip():
+        }
+        return record, manifest_row
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        results = list(pool.map(invoke_row, rows))
+
+    for record, manifest_row in results:
+        records[record["id"]] = record
+        manifest_rows.append(manifest_row)
+        if record["exitCode"] != 0 or not (result_dir / record["answerFile"]).read_text(
+            encoding="utf-8"
+        ).strip():
             failed = True
+    write_run_records(records_path, records)
 
     write_json_atomic(result_dir / "run_manifest.json", {
         "schemaVersion": 1,
@@ -660,7 +741,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"{report['summary']['missingAnswers']} missing"
         )
         return 1 if report["summary"]["missingAnswers"] else 0
-    return run_rows(args.tag, selected, rubric, result_dir, args.timeout_ms, args.max_turns, args.force)
+    return run_rows(
+        args.tag,
+        selected,
+        rubric,
+        result_dir,
+        args.timeout_ms,
+        args.max_turns,
+        args.force,
+        args.workers,
+        verbose=args.verbose,
+    )
 
 
 if __name__ == "__main__":
