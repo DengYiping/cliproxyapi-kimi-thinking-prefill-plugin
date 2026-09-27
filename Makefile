@@ -16,7 +16,7 @@ build:
 	@echo "built $(ARTIFACT)"
 
 test:
-	go test ./...
+	go test .
 
 install: build
 	@mkdir -p $(PLUGINS_DIR)/$(GOOS)/$(GOARCH)

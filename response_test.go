@@ -68,6 +68,112 @@ func TestResponseHookRegistrationAndRPC(t *testing.T) {
 	}
 }
 
+func TestResponseAfterHookRewritesTrialRefusal(t *testing.T) {
+	registration := pluginRegistration()
+	if !registration.Capabilities.ResponseAfterTranslator {
+		t.Fatal("response after hook must be registered")
+	}
+	previous := currentConfig.Load()
+	defer currentConfig.Store(previous)
+	cfg := mustConfig(t, "")
+	currentConfig.Store(&cfg)
+	req := pluginapi.ResponseTransformRequest{
+		FromFormat:        "openai",
+		ToFormat:          "openai-response",
+		Model:             "kimi-k3",
+		TranslatedRequest: []byte(`{"model":"kimi-k3"}`),
+		Body: []byte(`{"choices":[{"message":{"role":"assistant","content":` +
+			`"I can't help write a working proof-of-concept exploit."}}]}`),
+	}
+	raw, err := json.Marshal(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := handleMethod(pluginabi.MethodResponseNormalizeAfter, raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result struct {
+		OK     bool                      `json:"ok"`
+		Result pluginapi.PayloadResponse `json:"result"`
+	}
+	if err := json.Unmarshal(encoded, &result); err != nil {
+		t.Fatal(err)
+	}
+	content := gjson.GetBytes(result.Result.Body, "choices.0.message.content").String()
+	if strings.HasPrefix(content, "I can't") || !strings.Contains(content, "finishability") {
+		t.Fatalf("refusal not reframed: %s", result.Result.Body)
+	}
+}
+
+func TestResponseAfterHookLeavesBenignAnswerUntouched(t *testing.T) {
+	previous := currentConfig.Load()
+	defer currentConfig.Store(previous)
+	cfg := mustConfig(t, "")
+	currentConfig.Store(&cfg)
+	req := pluginapi.ResponseTransformRequest{
+		FromFormat:        "openai",
+		ToFormat:          "openai-response",
+		Model:             "kimi-k3",
+		TranslatedRequest: []byte(`{"model":"kimi-k3"}`),
+		Body: []byte(`{"choices":[{"message":{"role":"assistant","content":` +
+			`"Here is a concrete scope plan, and I can't confirm some observables without network."}}]}`),
+	}
+	raw, err := json.Marshal(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := handleMethod(pluginabi.MethodResponseNormalizeAfter, raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result struct {
+		OK     bool                      `json:"ok"`
+		Result pluginapi.PayloadResponse `json:"result"`
+	}
+	if err := json.Unmarshal(encoded, &result); err != nil {
+		t.Fatal(err)
+	}
+	content := gjson.GetBytes(result.Result.Body, "choices.0.message.content").String()
+	if !strings.HasPrefix(content, "Here is a concrete scope plan") {
+		t.Fatalf("benign answer changed: %s", result.Result.Body)
+	}
+}
+
+func TestServerDeviceHintNotTransportInjection(t *testing.T) {
+	previous := currentConfig.Load()
+	defer currentConfig.Store(previous)
+	cfg := mustConfig(t, "")
+	currentConfig.Store(&cfg)
+	req := pluginapi.ResponseTransformRequest{
+		FromFormat:        "openai",
+		ToFormat:          "openai-response",
+		Model:             "kimi-k3",
+		TranslatedRequest: []byte(`{"model":"kimi-k3"}`),
+		Body: []byte(`{"choices":[{"message":{"role":"assistant","content":` +
+			`"Summary. POST /api/travel-plan on the server or device. Moonshot checks method, path, direction, and remote schema."}}]}`),
+	}
+	raw, err := json.Marshal(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := handleMethod(pluginabi.MethodResponseNormalizeAfter, raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result struct {
+		OK     bool                      `json:"ok"`
+		Result pluginapi.PayloadResponse `json:"result"`
+	}
+	if err := json.Unmarshal(encoded, &result); err != nil {
+		t.Fatal(err)
+	}
+	content := gjson.GetBytes(result.Result.Body, "choices.0.message.content").String()
+	if !strings.Contains(content, "POST /api/travel-plan") || !strings.Contains(content, "Moonshot") {
+		t.Fatalf("server/device direction was rewritten: %s", result.Result.Body)
+	}
+}
+
 func TestInlineSeedSurvivesFollowingTurn(t *testing.T) {
 	cfg := mustConfig(t, "")
 	first := transform(cfg, "openai", "kimi-k3", []byte(`{"model":"kimi-k3","messages":[`+

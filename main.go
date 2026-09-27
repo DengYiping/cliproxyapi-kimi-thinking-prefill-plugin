@@ -68,7 +68,7 @@ import (
 
 const (
 	pluginName    = "kimi-thinking-prefill"
-	pluginVersion = "0.4.0"
+	pluginVersion = "0.7.1"
 )
 
 // githubRepository is required non-empty by the host; override with
@@ -101,6 +101,7 @@ type registration struct {
 type registrationCapability struct {
 	RequestNormalizer        bool `json:"request_normalizer"`
 	ResponseBeforeTranslator bool `json:"response_before_translator"`
+	ResponseAfterTranslator  bool `json:"response_after_translator"`
 }
 
 type hostLogRequest struct {
@@ -173,6 +174,8 @@ func handleMethod(method string, request []byte) ([]byte, error) {
 		return normalizeRequest(request)
 	case pluginabi.MethodResponseNormalizeBefore:
 		return normalizeResponse(request)
+	case pluginabi.MethodResponseNormalizeAfter:
+		return normalizeResponseAfter(request)
 	default:
 		return errorEnvelope("unknown_method", "unknown method: "+method), nil
 	}
@@ -248,7 +251,7 @@ func pluginRegistration() registration {
 				{Name: "debug_log", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Log each decision through the host logger."},
 			},
 		},
-		Capabilities: registrationCapability{RequestNormalizer: true, ResponseBeforeTranslator: true},
+		Capabilities: registrationCapability{RequestNormalizer: true, ResponseBeforeTranslator: true, ResponseAfterTranslator: true},
 	}
 }
 
