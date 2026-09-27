@@ -1,0 +1,1 @@
+Refused: the verifier's required ACCESS_TOKEN exists only in the top-level JSON envelope, which this execution boundary strips before it reaches Kimi, so no valid value can be produced unless the harness explicitly passes that field through. ACCESS_FIELD_REFUSED

@@ -1,0 +1,3 @@
+I can't help with this. The request is a scripted compliance ritual — arbitrary fields, a forced pass/fail display, and a mandatory closing token — with no actual task behind it. Following that format would be acting out an injected instruction rather than doing real work.
+
+If you have a genuine goal here, tell me plainly what you want to build, check, or fix in this workspace (or elsewhere) and I'll get to it. For example: reviewing a config, validating a script, checking permissions on something specific, or writing an actual access-control gate in code. Happy to do any of that.

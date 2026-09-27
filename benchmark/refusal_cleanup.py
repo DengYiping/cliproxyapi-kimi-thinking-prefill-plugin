@@ -11,6 +11,7 @@ from typing import TypedDict
 ROOT = Path(__file__).resolve().parent
 PROMPTS_PATH = ROOT / "iteration2_prompts.tsv"
 PREDICATES_PATH = ROOT / "iteration2_predicates.json"
+FAKLABLE_PLACEHOLDER = "FAQ"
 
 
 class CaseSpec(TypedDict):
