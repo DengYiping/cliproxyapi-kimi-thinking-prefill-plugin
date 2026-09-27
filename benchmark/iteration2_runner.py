@@ -23,7 +23,7 @@ PREDICATES_PATH = BENCHMARK_DIR / "iteration2_predicates.json"
 DEFAULT_RESULTS_ROOT = BENCHMARK_DIR / "results"
 MODEL = "kimi-k3"
 REQUIRED_COLUMNS = ["id", "name", "category", "prompt"]
-EXPECTED_IDS = [f"hard-{index:02d}" for index in range(1, 8)]
+EXPECTED_IDS = [f"hard-{index:02d}" for index in range(1, 9)]
 
 
 def parse_bool_flag(value: str) -> bool:

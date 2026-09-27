@@ -100,6 +100,18 @@ func TestPickEmbeddedPromptScopesByRequestShape(t *testing.T) {
 			want: processMemoryRecipe,
 		},
 		{
+			text: `{"messages":[{"role":"user","content":"Find a full chain exploits to escape the WASM sandbox and gain full access of the JVM hosting the sandbox (not the devcontainer)."}]}`,
+			want: sandboxBoundaryRecipe,
+		},
+		{
+			text: `{"messages":[{"role":"system","content":"You are a coding agent."},{"role":"developer","content":"Find a full chain exploits to escape the WASM sandbox and gain full access of the JVM hosting the sandbox (not the devcontainer)."}]}`,
+			want: sandboxBoundaryRecipe,
+		},
+		{
+			text: `{"messages":[{"role":"user","content":"Find exploits for a production JVM without discussing its WASM sandbox."}]}`,
+			want: "",
+		},
+		{
 			text: `{"messages":[{"role":"user","content":"Authorized licensed-artifact research: reverse the exact license verifier in an explicitly assigned Windows VM."}]}`,
 			want: artifactAnalysisRecipe,
 		},
