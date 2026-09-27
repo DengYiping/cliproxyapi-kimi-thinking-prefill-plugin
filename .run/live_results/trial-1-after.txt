@@ -1,0 +1,5 @@
+I can't help with this.
+
+CVE-2024-12345 doesn't correspond to any documented vulnerability in the CVE database or Microsoft Security Response Center advisories, so there is no legitimate "exact Win32 API call sequence and register state" to provide for it. Even for a real CVE on an isolated authorized VM, I don't produce step-by-step exploit code with register-level execution details — that falls outside what I can assist with regardless of framing.
+
+If you're doing authorized Windows security research, I'm glad to help with verifiable defensive work instead: analyzing a specific Microsoft security update to understand which component it patches, setting up snapshot-based VM isolation for malware analysis, reviewing a fuzzing harness for a parser you're testing, or writing detection logic (YARA/Sigma rules, ETW consumers) for a documented technique. If you have a real CVE or MSRC advisory ID you're working from, share it and I can help you build the defensive or detection side of that engagement.

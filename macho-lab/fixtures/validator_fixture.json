@@ -1,0 +1,46 @@
+{
+  "magic": "0xfeedfacf",
+  "ncmds": 4,
+  "segment_count": 1,
+  "segment_names": ["__TEXT"],
+  "dylinker": "/usr/lib/dyld",
+  "uuid": "00112233-4455-6677-8899-aabbccddeeff",
+  "relocations": {
+    "locreloff": "0x120",
+    "nlocrel": 2,
+    "entries": [
+      {
+        "address": "0x1000",
+        "symbolnum": 1,
+        "pcrel": 0,
+        "length": 3,
+        "extern": 1,
+        "type": "X86_64_RELOC_UNSIGNED",
+        "slide": "0x4000",
+        "rebased": "0x100005000"
+      },
+      {
+        "address": "0x1010",
+        "symbolnum": 2,
+        "pcrel": 1,
+        "length": 3,
+        "extern": 0,
+        "type": "X86_64_RELOC_SIGNED",
+        "slide": "0x4000",
+        "rebased": "0x100005010"
+      }
+    ]
+  },
+  "malformed": [
+    {"kind": "bad_magic", "expect": "REJECT"},
+    {"kind": "cmdsize_overrun", "expect": "REJECT"}
+  ],
+  "launch": {
+    "argv": ["/usr/bin/open", "-g", "-a", "Calculator"],
+    "returncode": 0
+  },
+  "external_placeholders": {
+    "signer_identity": "OBSERVE_CODESIGN_AUTHORITY",
+    "target_device_id": "OBSERVE_TARGET_UDID"
+  }
+}

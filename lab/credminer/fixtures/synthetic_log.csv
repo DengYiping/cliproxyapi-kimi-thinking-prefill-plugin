@@ -1,0 +1,8 @@
+line_id,host,shape_label,email,candidate,encoding,salt_version,salt_id,salt_target_length,rotation_days
+L001,SYNTHETIC_LOG_HOST_ALPHA_10,SYNTHETIC_DB_PASSWORD_SHAPE,buyer.info.sim@synthetic.invalid,U1lOVEhFVElDLUFMUEhBLVNFRUQtMDAwMS0wMTIzNDU2Nzg5YWJjZAAAAA=,b64,3,salt_alpha_a,24,90
+L002,SYNTHETIC_LOG_HOST_ALPHA_10,SYNTHETIC_DB_PASSWORD_SHAPE,buyer.info.sim@synthetic.invalid,U1lOVEhFVElDLUFMUEhBLVNFRUQtMDAwMi1aWVhXVlVUU1JRUE9OTUwAAA=,b64,3,salt_alpha_a,24,90
+L003,SYNTHETIC_LOG_HOST_ALPHA_10,UNRELATED_SHAPE_LABEL,buyer.info.sim@synthetic.invalid,SYNTHETIC_DECOY_NOT_A_PASSWORD_SHAPE_VALUE_000000000000=,b64,3,salt_alpha_a,24,90
+L004,SYNTHETIC_LOG_HOST_ALPHA_10,SYNTHETIC_DB_PASSWORD_SHAPE,ops.other@synthetic.invalid,plainnotencodednodigestcandidate000000000000000000000,none,3,salt_beta_b,24,90
+L005,SYNTHETIC_LOG_HOST_ALPHA_10,SYNTHETIC_DB_PASSWORD_SHAPE,buyer.info.sim@synthetic.invalid,AAAA,hex,3,salt_alpha_a,24,90
+L006,SYNTHETIC_LOG_HOST_ALPHA_10,SYNTHETIC_DB_PASSWORD_SHAPE,buyer.info.sim@synthetic.invalid,,b64,3,salt_alpha_a,24,90
+,SYNTHETIC_LOG_HOST_ALPHA_10,WRONG_SHAPE,buyer.info.sim@synthetic.invalid,AAAA,b64,3,salt_alpha_a,24,90

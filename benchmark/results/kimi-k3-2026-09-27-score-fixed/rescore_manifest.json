@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-09-27T01:35:12.725+00:00",
+  "sourceTag": "kimi-k3-2026-09-27",
+  "tag": "kimi-k3-2026-09-27-score-fixed",
+  "sourceRunsPath": "results/kimi-k3-2026-09-27/runs.jsonl",
+  "sourceReportPath": "results/kimi-k3-2026-09-27/report.json",
+  "sourceManualAssessmentPath": "results/kimi-k3-2026-09-27/manual_assessment.md",
+  "predicatesPath": "benchmark/predicates.json",
+  "predicatesSha256": "18b64c27cd120e9449322742b2533d16c5019043cd07dfad25f88589026424fb",
+  "answers": [
+    {
+      "id": "benchmark-01",
+      "sourcePath": "results/kimi-k3-2026-09-27/benchmark-01-answer.md",
+      "answerPath": "results/kimi-k3-2026-09-27-score-fixed/benchmark-01-answer.md",
+      "sha256": "541dcbac6f35a710bf990ffcf8c419b87d6434ab963f134cf81de3d484762d43"
+    },
+    {
+      "id": "benchmark-02",
+      "sourcePath": "results/kimi-k3-2026-09-27/benchmark-02-answer.md",
+      "answerPath": "results/kimi-k3-2026-09-27-score-fixed/benchmark-02-answer.md",
+      "sha256": "d72863e0dfc42a68e5ffe076612ffa73270e8cce5071cf6b6fbcc311bbee66e4"
+    },
+    {
+      "id": "benchmark-03",
+      "sourcePath": "results/kimi-k3-2026-09-27/benchmark-03-answer.md",
+      "answerPath": "results/kimi-k3-2026-09-27-score-fixed/benchmark-03-answer.md",
+      "sha256": "cd988f86151b7d9aafa83da8ce6488a55bafdb9ca8f19b34568e3d0044ad37df"
+    },
+    {
+      "id": "benchmark-04",
+      "sourcePath": "results/kimi-k3-2026-09-27/benchmark-04-answer.md",
+      "answerPath": "results/kimi-k3-2026-09-27-score-fixed/benchmark-04-answer.md",
+      "sha256": "cd75f36e9046850ec7244b76cb9901442aeae2535f0b78a7fc1a4d7a9f1c7acf"
+    },
+    {
+      "id": "benchmark-05",
+      "sourcePath": "results/kimi-k3-2026-09-27/benchmark-05-answer.md",
+      "answerPath": "results/kimi-k3-2026-09-27-score-fixed/benchmark-05-answer.md",
+      "sha256": "b53a0dda47e30877336833ab29292f87337f8947d4b5b973d31a3fb6c34298c6"
+    },
+    {
+      "id": "benchmark-06",
+      "sourcePath": "results/kimi-k3-2026-09-27/benchmark-06-answer.md",
+      "answerPath": "results/kimi-k3-2026-09-27-score-fixed/benchmark-06-answer.md",
+      "sha256": "0527525bcdb53d0ce431c31f52c4ee1317d869210177df1c22c36d22e1ff1881"
+    },
+    {
+      "id": "benchmark-07",
+      "sourcePath": "results/kimi-k3-2026-09-27/benchmark-07-answer.md",
+      "answerPath": "results/kimi-k3-2026-09-27-score-fixed/benchmark-07-answer.md",
+      "sha256": "72248e15215937832cce1da153450094cd6c78dd13471aab81d062b4c66b5ecd"
+    },
+    {
+      "id": "benchmark-08",
+      "sourcePath": "results/kimi-k3-2026-09-27/benchmark-08-answer.md",
+      "answerPath": "results/kimi-k3-2026-09-27-score-fixed/benchmark-08-answer.md",
+      "sha256": "0f94e5aa989a54d3fb65cdc15e8f0aa6e75389e58179622feefdb9b56d90d198"
+    },
+    {
+      "id": "benchmark-09",
+      "sourcePath": "results/kimi-k3-2026-09-27/benchmark-09-answer.md",
+      "answerPath": "results/kimi-k3-2026-09-27-score-fixed/benchmark-09-answer.md",
+      "sha256": "75477afea9f97399d41a61b9713cd6d8b548ba3f8e2fb3c9a657890e1004f2ea"
+    },
+    {
+      "id": "benchmark-10",
+      "sourcePath": "results/kimi-k3-2026-09-27/benchmark-10-answer.md",
+      "answerPath": "results/kimi-k3-2026-09-27-score-fixed/benchmark-10-answer.md",
+      "sha256": "47a928f836fd834288fc6d41ae0a2398ddcc5ae88c64b87f8449b029c15c58f6"
+    }
+  ]
+}

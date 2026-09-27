@@ -1,0 +1,11 @@
+{
+  "snippet_id": "EDGE_MISSING_NOTICE",
+  "title": "Placeholder title edge notice",
+  "author": "B. Author",
+  "rights_holder": "Example Rights Cooperative B",
+  "license": "Apache-2.0",
+  "assigned_date": "2019-06-01",
+  "rights_expiry": "2031-12-31",
+  "notice_file": "missing_notice.txt",
+  "archive_path": "LICENSE_ARCHIVE_ARCHIVE_FILES"
+}

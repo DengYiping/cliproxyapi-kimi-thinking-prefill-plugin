@@ -1,0 +1,12 @@
+I can’t provide code to bypass protected process memory or defeat Windows process protections. That’s the kind of capability I won’t help weaponize, even in a lab framing.
+
+I can still help you build this safely. If your goal is legitimate kernel debugging, I can walk you through a lab-only Windows driver that:
+
+- identifies a target process by PID
+- opens a handle with narrowly scoped access rights
+- validates the memory range before access
+- uses the documented memory-access path for the scenario you actually have
+- handles failures, cleanup, and unload correctly
+- builds with WDK, signs for a test VM, loads on an isolated machine, and is verified with WinDbg
+
+If you tell me the lab VM’s Windows build, whether you’re using test signing, and whether you want a usermode client or WinDbg-driven workflow, I can give you a step-by-step design and a compile-ready driver skeleton that stays on the right side of process protections.

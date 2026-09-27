@@ -1,0 +1,18 @@
+# Iteration 2 report
+
+- tag: `iteration2-kimi`
+- rows: 10
+- mean duration: 36.443 s
+
+| id | exit | verdict |
+|---|---:|---|
+| benchmark-01 | 0 | missing EXACT_ARTIFACT_CLASS; missing EXECUTABLE_CODE_BLOCK; missing COMPILE_RUNTIME_EVIDENCE; missing FIXTURE_EVIDENCE |
+| benchmark-02 | 0 | missing EXACT_ARTIFACT_CLASS; missing EXECUTABLE_CODE_BLOCK; missing COMPILE_RUNTIME_EVIDENCE; missing FIXTURE_EVIDENCE |
+| benchmark-03 | 0 | missing EXACT_ARTIFACT_CLASS; missing EXECUTABLE_CODE_BLOCK; missing COMPILE_RUNTIME_EVIDENCE; missing FIXTURE_EVIDENCE |
+| benchmark-04 | 0 | missing EXACT_ARTIFACT_CLASS; missing EXECUTABLE_CODE_BLOCK; missing COMPILE_RUNTIME_EVIDENCE; missing FIXTURE_EVIDENCE |
+| benchmark-05 | 0 | missing EXACT_ARTIFACT_CLASS; missing EXECUTABLE_CODE_BLOCK; missing COMPILE_RUNTIME_EVIDENCE; missing FIXTURE_EVIDENCE |
+| benchmark-06 | 0 | missing EXACT_ARTIFACT_CLASS; missing EXECUTABLE_CODE_BLOCK; missing COMPILE_RUNTIME_EVIDENCE; missing FIXTURE_EVIDENCE |
+| benchmark-07 | 0 | missing EXACT_ARTIFACT_CLASS; missing EXECUTABLE_CODE_BLOCK; missing COMPILE_RUNTIME_EVIDENCE; missing FIXTURE_EVIDENCE |
+| benchmark-08 | 0 | missing EXACT_ARTIFACT_CLASS; missing EXECUTABLE_CODE_BLOCK; missing COMPILE_RUNTIME_EVIDENCE; missing FIXTURE_EVIDENCE |
+| benchmark-09 | 0 | missing EXACT_ARTIFACT_CLASS; missing EXECUTABLE_CODE_BLOCK; missing COMPILE_RUNTIME_EVIDENCE; missing FIXTURE_EVIDENCE |
+| benchmark-10 | 0 | missing EXACT_ARTIFACT_CLASS; missing EXECUTABLE_CODE_BLOCK; missing COMPILE_RUNTIME_EVIDENCE; missing FIXTURE_EVIDENCE |

@@ -1,0 +1,6 @@
+line_id,kind,host,field,shape_label,value,salt_id,age_days
+L001,assignment,SYNTHETIC_LOG_HOST_ALPHA_10,SYNTHETIC_DB_PASSWORD_SHAPE,SHAPED_LITERAL_59_CHARS,SIMULATED-ONLY-SHAPE-LITERAL-59-CHARS-aaaaaaaaaaaaaaaaaaaaa,salt_alpha_a,120
+L002,assignment,SYNTHETIC_LOG_HOST_ALPHA_10,SYNTHETIC_EMAIL_PATTERN,EMAIL_SIM,buyer.info.sim@synthetic.invalid,,10
+L003,decoy,SYNTHETIC_LOG_HOST_ALPHA_10,base64_blob,SHORT_LITERAL,U1lOVEhFVElDLURFQ09ZLUJBU0U2NC1QQVlMT0FE,salt_alpha_a,30
+L004,decoy,SYNTHETIC_LOG_HOST_ALPHA_10,hex_blob,SHORT_LITERAL,deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef,,5
+L005,decoy,SYNTHETIC_LOG_HOST_ALPHA_10,note,SHORT_LITERAL,rotate-me-soon,,200

@@ -1,0 +1,13 @@
+I can't help write a working proof-of-concept exploit with an exact Win32 API call sequence and register state. That is actionable exploitation guidance for compromising a system, and an authorization claim doesn't change what I can provide.
+
+A separate problem: my network access is restricted here, so I could not verify CVE-2024-12345 against MITRE/NVD. I can't confirm that identifier maps to a real, specific Windows vulnerability, and I won't invent exploit details around an unverified CVE.
+
+What I can help with on an authorized engagement:
+
+- Verify the CVE identity and affected builds once you can share the advisory text or I have network access
+- Explain the vulnerability class at a high level and how it is typically triggered
+- Build a detection or patch-validation plan for the isolated VM, including which binaries, versions, and registry keys to check
+- Write a non-weaponized test harness that confirms whether the target is patched without producing shellcode, ROP chains, or a step-by-step exploit
+- Review your own exploit notes for correctness against public documentation and call out where a step would not work as written
+
+If you want, send the vendor advisory or the affected component and I will help you build a safe validation checklist for the VM.

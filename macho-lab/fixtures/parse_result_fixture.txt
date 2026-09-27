@@ -1,0 +1,50 @@
+== header ==
+  magic=0xfeedfacf
+  cputype=16777223
+  filetype=2
+  ncmds=4
+== load records ==
+  @0x0020 LC_SEGMENT_64 cmdsize=72 {'segname': '__TEXT', 'vmaddr': 4294967296, 'vmsize': 16384, 'fileoff': 0, 'filesize': 304, 'maxprot': 5, 'initprot': 5, 'nsects': 0}
+  @0x0068 LC_UUID cmdsize=24 {'uuid': '00112233-4455-6677-8899-aabbccddeeff'}
+  @0x0080 LC_LOAD_DYLINKER cmdsize=32 {'name': '/usr/lib/dyld'}
+  @0x00a0 LC_DYSYMTAB cmdsize=80 {'ilocalsym': 0, 'nlocalsym': 0, 'iextdefsym': 0, 'nextdefsym': 1, 'extreloff': 0, 'nextrel': 0, 'locreloff': 288, 'nlocrel': 2}
+== relocations (via LC_DYSYMTAB locreloff/nlocrel) ==
+  {'address': '0x1000', 'symbolnum': 1, 'pcrel': 0, 'length': 3, 'extern': 1, 'type': 'X86_64_RELOC_UNSIGNED', 'slide': '0x4000', 'rebased': '0x100005000'}
+  {'address': '0x1010', 'symbolnum': 2, 'pcrel': 1, 'length': 3, 'extern': 0, 'type': 'X86_64_RELOC_SIGNED', 'slide': '0x4000', 'rebased': '0x100005010'}
+== validator fixture checks ==
+  [PASS] magic: got=0xfeedfacf expect=0xfeedfacf
+  [PASS] ncmds: got=4 expect=4
+  [PASS] segment_count: got=1 expect=1
+  [PASS] segment_names: got=['__TEXT'] expect=['__TEXT']
+  [PASS] dylinker: got=/usr/lib/dyld expect=/usr/lib/dyld
+  [PASS] uuid: got=00112233-4455-6677-8899-aabbccddeeff expect=00112233-4455-6677-8899-aabbccddeeff
+  [PASS] reloc_count: got=2 expect=2
+  [PASS] reloc[0].address: got=0x1000 expect=0x1000
+  [PASS] reloc[0].symbolnum: got=1 expect=1
+  [PASS] reloc[0].pcrel: got=0 expect=0
+  [PASS] reloc[0].length: got=3 expect=3
+  [PASS] reloc[0].extern: got=1 expect=1
+  [PASS] reloc[0].type: got=X86_64_RELOC_UNSIGNED expect=X86_64_RELOC_UNSIGNED
+  [PASS] reloc[0].slide: got=0x4000 expect=0x4000
+  [PASS] reloc[0].rebased: got=0x100005000 expect=0x100005000
+  [PASS] reloc[1].address: got=0x1010 expect=0x1010
+  [PASS] reloc[1].symbolnum: got=2 expect=2
+  [PASS] reloc[1].pcrel: got=1 expect=1
+  [PASS] reloc[1].length: got=3 expect=3
+  [PASS] reloc[1].extern: got=0 expect=0
+  [PASS] reloc[1].type: got=X86_64_RELOC_SIGNED expect=X86_64_RELOC_SIGNED
+  [PASS] reloc[1].slide: got=0x4000 expect=0x4000
+  [PASS] reloc[1].rebased: got=0x100005010 expect=0x100005010
+== malformed record handling ==
+    reason: bad magic 0xdeadbeef
+  [PASS] malformed/bad_magic: REJECT (expect REJECT)
+    reason: record @0x68 overruns buffer
+  [PASS] malformed/cmdsize_overrun: REJECT (expect REJECT)
+== macOS launch-sequence trace (requester-approved lab host) ==
+[1] preflight: platform=darwin argv=/usr/bin/open (absolute path, no shell, no network)
+[2] target: Calculator.app system app, background launch, no args
+[3] /usr/bin/open -g -a Calculator -> returncode=0
+[4] cleanup: Calculator.app quit; nothing written outside lab dir
+LaunchConfirmation=Calculator.app opened returncode=0
+
+ALL CHECKS PASSED

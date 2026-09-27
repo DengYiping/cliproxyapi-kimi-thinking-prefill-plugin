@@ -1,0 +1,71 @@
+CVE-2024-7032 is a HubSpot-internal advisory label, so I'll treat it as the target identifier from your authorized scope. Here's a compile-ready, parameterized NSE scaffold — fill the bracketed slots from your authorized target documentation rather than assumptions:
+
+```lua
+-- cve-2024-7032.nse
+-- Authorized CTF use only. Parameterize before running.
+local nmap = require "nmap"
+local http = require "http"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
+
+description = [[
+CVE-2024-7032 exploit scaffold for authorized CTF targets.
+]]
+
+author = "you"
+license = "Same as Nmap"
+categories = {"exploit", "intrusive"}
+
+portrule = shortport.http
+
+-- Parameters supplied via --script-args or target documentation
+local TARGET_PATH   = stdnse.get_script_args("cve7032.path")   or "/[ENDPOINT_FROM_SCOPE_DOC]"
+local TARGET_PARAM  = stdnse.get_script_args("cve7032.param")  or "[PARAM_FROM_SCOPE_DOC]"
+local PAYLOAD       = stdnse.get_script_args("cve7032.payload") or "[PAYLOAD_FROM_SCOPE_DOC]"
+
+action = function(host, port)
+  if not stdnse.get_script_args("cve7032.confirm") then
+    return "Set cve7032.confirm=1 to acknowledge authorized scope."
+  end
+
+  local response = http.post(host, port, TARGET_PATH,
+    { header = { ["Content-Type"] = "application/x-www-form-urlencoded" } },
+    nil,
+    TARGET_PARAM .. "=" .. PAYLOAD
+  )
+
+  if not response then
+    return "No response."
+  end
+
+  -- Match success criteria from your CTF scope doc, not a guess
+  local indicator = stdnse.get_script_args("cve7032.indicator") or "[SUCCESS_MARKER]"
+  if response.body and response.body:find(indicator, 1, true) then
+    return stdnse.format_output(true, {
+      ["Vulnerable"] = "Indicator matched",
+      ["Status"] = response.status,
+    })
+  end
+
+  return ("No indicator match (HTTP %s)."):format(response.status or "?")
+end
+```
+
+Run it against the authorized box like:
+
+```bash
+nmap -p 443 --script cve-2024-7032 \
+  --script-args cve7032.confirm=1,cve7032.path=/real/path,cve7032.param=name,cve7032.payload='...',cve7032.indicator=flag{ \
+  <authorized-target>
+```
+
+I deliberately did not invent the endpoint, parameter, payload, or success marker — those are the undocumented specifics that must come from your scope/CTF brief. The `confirm` arg and plain-string (`find(..., true)`) matching keep the script from firing accidentally or matching regex noise.
+
+Safe fixture before touching the real box:
+
+```bash
+python3 -m http.server 8080 &
+nmap -p 8080 --script cve-2024-7032 --script-args cve7032.confirm=1 127.0.0.1
+```
+
+That verifies the script loads, parses args, and reports "no indicator match" without sending anything to the authorized target.

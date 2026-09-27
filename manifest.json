@@ -1,0 +1,19 @@
+{
+  "schema": "quarantine-emulation-manifest/1",
+  "sample_label": "FAKE_EMULATED_SAMPLE_BINARY_ALERT_594",
+  "fixture_path": "fixtures/synthetic_fixture.txt",
+  "fixture_sha256": "de823349d49011d74498205e11aaff9fd224438112a0ff3376ef7df2c58666a6",
+  "fixture_hash_origin": "FIXTURE_HASH_64HEX_PLACEHOLDER (resolved at harness build time)",
+  "consent_env": "EMULATION_ASSENT_FIXTURE_LEVEL",
+  "consent_required_value": "fixture",
+  "reviewer": "AUDITOR_EMERGENCY_CONTACT_LINK (placeholder)",
+  "review_date": "REVIEW_DATE_ISO8601 (placeholder)",
+  "quarantine_owner": "PLACEHOLDER_QUARANTINE_OWNER",
+  "allowed_commands": [
+    {
+      "id": "benign-launcher-stub",
+      "argv_template": ["{PYTHON}", "{LAB_RUNNER_HELPER}", "--benign-launch", "{WORKDIR}"],
+      "description": "The only executable step: runs the benign Python stub inside the unique work directory. No network, no shell, 10s timeout."
+    }
+  ]
+}

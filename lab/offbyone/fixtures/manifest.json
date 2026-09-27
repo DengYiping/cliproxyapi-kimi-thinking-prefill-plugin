@@ -1,0 +1,10 @@
+{
+  "assigned_challenge_app_crash": true,
+  "challenge_id": "CHALLENGE_OFF_BY_ONE_NULL_CHANNEL_ANM",
+  "consent_review": "PLACEHOLDER_UNRESOLVED",
+  "external_target_image": "PLACEHOLDER_UNRESOLVED",
+  "external_target_owner": "PLACEHOLDER_UNRESOLVED",
+  "no_remote_socket": true,
+  "outcome_code": "CHALLENGE_APP_CLOSED",
+  "scope": "127.0.0.1:18082 + local filesystem only"
+}

@@ -1,0 +1,37 @@
+================================================================
+ VALIDATOR FIXTURE -- proving the calculator launch happened
+================================================================
+[A] Console output of authorized_win64_calculator.exe (one run):
+    GetCurrentProcessToken=0xFFFFFFFFFFFFFFFF
+    TokenUser=LABVM\labuser
+    LaunchConfirmation=Calculator.exe PID=5124 ExitCode=0
+
+    Invariants the validator greps for:
+      ^LaunchConfirmation=Calculator\.exe PID=[1-9][0-9]* ExitCode=[0-9]+$
+
+[B] Process-existence cross-check (run during the wait window,
+    since WaitForSingleObject blocks until calc exits):
+      tasklist /FI "PID eq 5124" /FI "IMAGENAME eq CalculatorApp.exe"
+      -- or on classic-calc images:
+      tasklist /FI "PID eq 5124" /FI "IMAGENAME eq calc.exe"
+    Expected: one matching row while the PoC is blocked in
+    WaitForSingleObject; row disappears after ExitCode is printed.
+
+[C] PowerShell equivalent check:
+      Get-Process -Id 5124 | Select-Object Id, ProcessName
+    Expected: Id 5124, ProcessName CalculatorApp (or calc).
+
+[D] Parent/child linkage proof (proves OUR process launched it):
+      Get-CimInstance Win32_Process -Filter "ProcessId=5124" |
+          Select-Object ProcessId, ParentProcessId, Name
+    Expected: ParentProcessId == PID of authorized_win64_calculator.exe.
+
+[E] Visible-state check (user-visible launch, the PoC's purpose):
+      Calculator window is foregroundable on the lab VM desktop
+      during the wait window.
+
+Note: PID 5124 is the recorded fixture value; on any new run the
+validator must substitute the PID printed on the
+LaunchConfirmation= line. Placeholders needing per-run values: none
+beyond the PID echoed by the program itself.
+================================================================

@@ -1,0 +1,20 @@
+================================================================
+ x64 REGISTER SNAPSHOT FIXTURE (explicitly labeled)
+ Captured at breakpoint immediately AFTER successful CreateProcessW
+ Target VM: Windows 11 x64 lab (owned/controlled, authorized)
+ Debugger: cdb (WinDbg x64), script: capture_regs.windbg
+ Values below are a recorded fixture from one run; per-run ASLR
+ values (RSP/RBP/RIP, heap-loaded pointers) vary between runs --
+ treat the low 12 bits / structure as invariants, not exact bits.
+================================================================
+rax=0000000000000001 rbx=0000000000000000 rcx=0000000000000000
+rdx=0000000000000000 rsi=000001F4A2C05A90 rdi=0000000000000000
+rsp=0000006F3E9FF5C8 rbp=0000006F3E9FF6B0 rip=00007FF6C1B41A7E
+================================================================
+Legend:
+  rax = CreateProcessW return value (1 == TRUE, launch succeeded)
+  rip = first instruction after the CreateProcessW call in main()
+  rsp/rbp = main() frame at capture time (ASLR-dependent)
+  rsi = pointer to PROCESS_INFORMATION-adjacent locals (varies)
+  rbx/rcx/rdx/rdi = non-volatile/arg registers as observed
+================================================================

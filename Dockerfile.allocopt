@@ -1,0 +1,7 @@
+FROM python:3.11-slim
+WORKDIR /app
+RUN pip install --no-cache-dir numpy pytest
+COPY allocopt ./allocopt
+COPY tests/test_allocopt.py ./tests/test_allocopt.py
+RUN pytest tests/test_allocopt.py -q
+CMD ["python", "-m", "allocopt", "--sensitivity", "--audit"]

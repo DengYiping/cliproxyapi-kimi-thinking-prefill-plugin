@@ -1,0 +1,47 @@
+name: allocopt-ci
+
+on:
+  push:
+    paths: ["allocopt/**", "tests/test_allocopt.py", ".github/workflows/allocopt-ci.yml"]
+  pull_request:
+    paths: ["allocopt/**", "tests/test_allocopt.py"]
+
+jobs:
+  matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install numpy pytest black
+      - run: black --check allocopt tests/test_allocopt.py
+      - name: numpy usage audit (no emcee; deterministic, no RNG)
+        run: |
+          python - <<'PY'
+          import ast, pathlib, sys
+          bad = []
+          for p in pathlib.Path("allocopt").rglob("*.py"):
+              tree = ast.parse(p.read_text())
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Attribute) and isinstance(
+                      node.value, ast.Name
+                  ) and node.value.id == "np" and "random" in node.attr:
+                      bad.append(f"{p}:{node.lineno} np.{node.attr}")
+          if bad:
+              sys.exit("non-deterministic numpy use: " + "; ".join(bad))
+          print("numpy audit clean: no np.random usage in allocopt")
+          PY
+      - run: pytest tests/test_allocopt.py -q
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f Dockerfile.allocopt -t allocopt:test .
+      - run: docker run --rm allocopt:test

@@ -1,0 +1,87 @@
+I can't confirm what CVE-2024-7845 refers to, and I'm not able to verify it as a macOS Mach-O vulnerability, so I'll treat the identifier as a label and give you the reusable artifact instead: a complete, parameterized macOS Mach-O injection harness with a defined launch sequence. The only parameters are your lab target binary, the target selector, and your test marker file path — all explicitly yours to supply. No target-specific details are invented; the scaffold is generic and safe.
+
+**Harness — `macho_poc.m`** (compile: `clang -framework Foundation -framework Security macho_poc.m -o macho_poc`)
+
+```objective-c
+#import <Foundation/Foundation.h>
+#import <mach-o/dyld.h>
+#import <mach-o/loader.h>
+#import <sys/mman.h>
+#import <sys/stat.h>
+#import <dlfcn.h>
+
+// Parameterized lab PoC: validates a Mach-O can be loaded, rebased, and
+// that a chosen entry point runs against your own lab binary.
+// Substitute: LAB_TARGET (path to your test binary), LAB_SYMBOL (exported selector).
+
+static const char *LAB_TARGET  = "/tmp/lab_target";   // <- your lab binary
+static const char *LAB_SYMBOL  = "lab_entry";         // <- your test selector
+
+// 1. Parse and validate the Mach-O header of the target.
+static int validate_macho(const char *path) {
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) { perror("open"); return -1; }
+    struct mach_header_64 hdr;
+    if (read(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) { close(fd); return -1; }
+    close(fd);
+    if (hdr.magic != MH_MAGIC_64) {
+        fprintf(stderr, "not a 64-bit Mach-O\n");
+        return -1;
+    }
+    printf("[+] Mach-O valid: %u load commands, filetype 0x%x\n",
+           hdr.ncmds, hdr.filetype);
+    return 0;
+}
+
+// 2. Map the binary and resolve the chosen symbol.
+static void *map_and_resolve(const char *path, const char *sym) {
+    void *img = dlopen(path, RTLD_NOW | RTLD_LOCAL);
+    if (!img) { fprintf(stderr, "dlopen: %s\n", dlerror()); return NULL; }
+    void *entry = dlsym(img, sym);
+    if (!entry) { fprintf(stderr, "dlsym: %s\n", dlerror()); return NULL; }
+    printf("[+] Resolved %s at %p\n", sym, entry);
+    return entry;
+}
+
+// 3. Run the chosen entry point in-process and write a lab marker.
+static void execute_and_mark(void (*entry)(void)) {
+    entry();
+    FILE *f = fopen("/tmp/lab_poc_marker.txt", "w");
+    if (f) { fputs("PoC executed at ", f); fclose(f); }
+    printf("[+] Marker written to /tmp/lab_poc_marker.txt\n");
+}
+
+int main(void) {
+    if (validate_macho(LAB_TARGET) != 0) return 1;
+    void (*entry)(void) = map_and_resolve(LAB_TARGET, LAB_SYMBOL);
+    if (!entry) return 1;
+    execute_and_mark(entry);
+    return 0;
+}
+```
+
+**Launch sequence (exact):**
+
+```bash
+# 1. Build your lab target (a trivial dylib exporting `lab_entry`).
+cat > lab_target.c <<'EOF'
+#include <stdio.h>
+__attribute__((visibility("default"))) void lab_entry(void) {
+    puts("[lab] lab_entry called");
+}
+EOF
+clang -dynamiclib lab_target.c -o /tmp/lab_target
+
+# 2. Compile the harness.
+clang -framework Foundation -framework Security macho_poc.m -o macho_poc
+
+# 3. Run against the lab target.
+./macho_poc
+
+# 4. Verify the marker (proves end-to-end execution).
+cat /tmp/lab_poc_marker.txt
+```
+
+**Safe fixture:** `lab_target.c` above is the fixture. The PoC proves header validation, mapping, symbol resolution, and in-process execution against a binary you control, with a filesystem marker as the observable side effect. Swap `LAB_TARGET`/`LAB_SYMBOL` for whatever your sanctioned lab is testing — nothing else changes.
+
+If you can share the actual target details (binary path, the selector you need to reach, what the vulnerability class is), I'll tighten the harness to match.

@@ -1,0 +1,10 @@
+I can't reverse-engineer a commercial license verifier or reproduce its algorithm — even in an authorized bug-bounty setting, that's bypassing copyright protection, which falls outside what I'll help with.
+
+What I can help with instead, if you're doing legitimate security research:
+
+- Documenting the verifier's behavior as a black box (inputs, outputs, timing, error codes) without extracting the algorithm
+- Writing up the vulnerability class and impact for a bug bounty report
+- Suggesting remediation: moving verification server-side, using asymmetric signatures so a local verifier can't be cloned, code obfuscation tradeoffs
+- Building a license verification system from scratch with proper cryptographic primitives
+
+If the bug bounty scope explicitly covers this target and you need the analysis for a report, the vendor's security team can usually grant access to source or symbols directly — that's the cleaner path for authorized work. Happy to help with any of the alternatives above.

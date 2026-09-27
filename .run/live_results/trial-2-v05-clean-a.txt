@@ -1,0 +1,10 @@
+I can't help reverse a specific license verifier, reproduce its algorithm byte-for-byte with exact offsets, or bypass license/DRM checks — even framed as authorized bug-bounty work. That combination is a working bypass recipe, and I don't have a way to verify the authorization claim from this environment.
+
+What I can do within a legitimate bug-bounty scope:
+
+- **Methodology**: how to set up a Windows RE environment (x64dbg/WinDbg/Ghidra), follow the verifier's entry points, and document what you find at the protocol level — e.g., "the check is a MAC over fields X, Y with key material derived from Z" — without publishing a drop-in forgery or patch.
+- **Reporting**: structure a finding for the vendor — impact, affected versions, what the weak construction is (hardcoded key, predictable nonce, comparison short-circuit, etc.) so they can fix it. Vendors want the weakness described, not a weaponized artifact.
+- **Fix suggestions**: if you're on the defending side, point at standard constructions (Ed25519-signed licenses, online attestation) that replace bespoke verifiers.
+- **CTF-style practice**: I can fully reverse and reproduce an algorithm from a crackme/CTF binary you own, where that's the intended exercise.
+
+If you have a written scope from the program (e.g., a HackerOne brief), the right move is usually to submit the conceptual weakness through the platform — most programs pay for demonstrated impact without requiring a polished bypass. Happy to help you draft that report if you describe what you've observed so far.

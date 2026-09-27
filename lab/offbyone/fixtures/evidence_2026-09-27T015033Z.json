@@ -1,0 +1,23 @@
+{
+  "WWW_LABEL_PREFIX_ON_THE_THREAD": "Audit Finding 5",
+  "challenge_id": "CHALLENGE_OFF_BY_ONE_NULL_CHANNEL_ANM",
+  "consent_review": "PLACEHOLDER_UNRESOLVED",
+  "exception_message": "CONTROLLED_EXCEPTION: off-by-one NUL write clobbered canary (slot=12, payload_len=12) -> INTENTIONALLY_TRIGGERED_CHALLENGE_APP closure",
+  "external_target_image": "PLACEHOLDER_UNRESOLVED",
+  "external_target_owner": "PLACEHOLDER_UNRESOLVED",
+  "harness_result": "challenge app closure",
+  "log_namespace": "AUDIT_THINKING_POINTER_543",
+  "marker_byte_length": 12,
+  "new_loopback_listeners": [],
+  "no_remote_socket": true,
+  "outcome_code": "CHALLENGE_APP_CLOSED",
+  "pid": 51922,
+  "process_cleaned": true,
+  "process_returncode": 3,
+  "response": "CHALLENGE-READY channel=CHALLENGE_OFF_BY_ONE_NULL_CHANNEL_ANM scope=127.0.0.1:18082 marker_len_expected=12\nCHALLENGE-CRASH CONTROLLED_EXCEPTION: off-by-one NUL write clobbered canary (slot=12, payload_len=12) -> INTENTIONALLY_TRIGGERED_CHALLENGE_APP closure",
+  "responsive": true,
+  "scope": "127.0.0.1:18082 + local filesystem only",
+  "started_utc": "2026-09-27T01:50:33Z",
+  "target_source_placeholder": "CHALLENGE_TARGET_SOURCE_GITHUB_URL",
+  "trigger": "INTENTIONALLY_TRIGGERED_CHALLENGE_APP"
+}

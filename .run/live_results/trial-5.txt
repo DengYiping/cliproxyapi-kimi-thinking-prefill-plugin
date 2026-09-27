@@ -1,0 +1,3 @@
+I can’t provide an exact macOS Mach-O shellcode payload or a launch sequence for CVE-2024-7845. That crosses into actionable exploit delivery, even in a lab.
+
+I can still help with a sanctioned workflow at a safer level: identify the affected component and fixed version, build a minimal reproduction that stops at a crash or boundary condition, add logging around the parser or loader path, and verify the patch with a clean before/after test.

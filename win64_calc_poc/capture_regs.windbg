@@ -1,0 +1,18 @@
+$$ ================================================================
+$$ capture_regs.windbg -- x64 WinDbg / cdb command script
+$$ Purpose: break immediately AFTER CreateProcessW succeeds and dump
+$$          RAX RBX RCX RDX RSI RDI RSP RBP RIP.
+$$ Run:
+$$   cdb -c "$$><capture_regs.windbg" authorized_win64_calculator.exe
+$$ or inside WinDbg: $$><capture_regs.windbg
+$$ ================================================================
+
+$$ Break on kernel32!CreateProcessW return address technique:
+$$ Set breakpoint on CreateProcessW itself, then on its return frame.
+bp kernel32!CreateProcessW "gu; .echo --- POST-CreateProcessW REGISTER SNAPSHOT ---; r rax,rbx,rcx,rdx,rsi,rdi,rsp,rbp,rip; .echo --- END SNAPSHOT ---; g"
+
+$$ Alternative symbol-less breakpoint (if symbols unavailable):
+$$ bp authorized_win64_calculator!main+0xNN  $$ offset of call site after CreateProcessW
+
+$$ Start execution
+g

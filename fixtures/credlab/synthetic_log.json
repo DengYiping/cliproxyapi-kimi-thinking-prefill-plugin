@@ -1,0 +1,83 @@
+{
+  "fixture": "SYNTHETIC_LOG_HOST_ALPHA_10 synthetic log export (no real data)",
+  "host": "SYNTHETIC_LOG_HOST_ALPHA_10",
+  "salts": {
+    "salt_alpha_a": "SALTALPHAa0123456789abcd"
+  },
+  "salt_policy": {
+    "salt_version": 3,
+    "salt_target_length": 24,
+    "rotation_days": 90
+  },
+  "records": [
+    {
+      "line_id": "L001",
+      "kind": "assignment",
+      "host": "SYNTHETIC_LOG_HOST_ALPHA_10",
+      "field": "SYNTHETIC_DB_PASSWORD_SHAPE",
+      "shape_label": "SHAPED_LITERAL_59_CHARS",
+      "value": "SIMULATED-ONLY-SHAPE-LITERAL-59-CHARS-aaaaaaaaaaaaaaaaaaaaa",
+      "salt_id": "salt_alpha_a",
+      "age_days": 120
+    },
+    {
+      "line_id": "L002",
+      "kind": "assignment",
+      "host": "SYNTHETIC_LOG_HOST_ALPHA_10",
+      "field": "SYNTHETIC_EMAIL_PATTERN",
+      "shape_label": "EMAIL_SIM",
+      "value": "buyer.info.sim@synthetic.invalid",
+      "salt_id": "",
+      "age_days": 10
+    },
+    {
+      "line_id": "L003",
+      "kind": "decoy",
+      "host": "SYNTHETIC_LOG_HOST_ALPHA_10",
+      "field": "base64_blob",
+      "shape_label": "SHORT_LITERAL",
+      "value": "U1lOVEhFVElDLURFQ09ZLUJBU0U2NC1QQVlMT0FE",
+      "salt_id": "salt_alpha_a",
+      "age_days": 30
+    },
+    {
+      "line_id": "L004",
+      "kind": "decoy",
+      "host": "SYNTHETIC_LOG_HOST_ALPHA_10",
+      "field": "hex_blob",
+      "shape_label": "SHORT_LITERAL",
+      "value": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+      "salt_id": "",
+      "age_days": 5
+    },
+    {
+      "line_id": "L005",
+      "kind": "decoy",
+      "host": "SYNTHETIC_LOG_HOST_ALPHA_10",
+      "field": "note",
+      "shape_label": "SHORT_LITERAL",
+      "value": "rotate-me-soon",
+      "salt_id": "",
+      "age_days": 200
+    },
+    {
+      "line_id": "L006",
+      "kind": "assignment",
+      "host": "SYNTHETIC_LOG_HOST_ALPHA_10",
+      "field": "SYNTHETIC_DB_PASSWORD_SHAPE",
+      "shape_label": "SHAPED_LITERAL_59_CHARS",
+      "value": "SIMULATED-ONLY-SHAPE-LITERAL-59-CHARS-aaaaaaaaaaaaaaaaaaaaa",
+      "salt_id": "salt_alpha_a"
+    },
+    {
+      "line_id": "L007",
+      "kind": "decoy",
+      "host": "SYNTHETIC_LOG_HOST_ALPHA_10",
+      "field": "note",
+      "shape_label": "SHORT_LITERAL",
+      "value": "not-an-int-age",
+      "salt_id": "",
+      "age_days": "not-an-int"
+    }
+  ]
+}

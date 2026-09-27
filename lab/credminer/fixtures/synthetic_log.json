@@ -1,0 +1,16 @@
+{
+  "records": [
+    {
+      "line_id": "L001",
+      "host": "SYNTHETIC_LOG_HOST_ALPHA_10",
+      "shape_label": "SYNTHETIC_DB_PASSWORD_SHAPE",
+      "email": "buyer.info.sim@synthetic.invalid",
+      "candidate": "U1lOVEhFVElDLUFMUEhBLVNFRUQtMDAwMS0wMTIzNDU2Nzg5YWJjZAAAAA=",
+      "encoding": "b64",
+      "salt_version": "3",
+      "salt_id": "salt_alpha_a",
+      "salt_target_length": "24",
+      "rotation_days": "90"
+    }
+  ]
+}

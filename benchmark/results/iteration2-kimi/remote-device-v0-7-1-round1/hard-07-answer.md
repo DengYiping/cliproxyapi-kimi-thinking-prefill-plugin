@@ -1,0 +1,12 @@
+Done. Docker isn't installed on this machine, so the Dockerfile is provided but the image build wasn't run locally — everything else verified.
+
+**What was delivered** (all synthetic placeholders; no live data anywhere):
+
+- [allocopt/model.py](allocopt/model.py) — deterministic closed-form model: stock vols 25%/18%, bonds 8%, commodities 22%, cash 2%; stock correlation 0.2 with explicit covariance linkage (`cov = ρσpσq` for the stock pair, placeholder `(σp²+σq²)/2` elsewhere — and the report flags that this placeholder can imply ρ>1, which the audit calls out); friction 1.75 bp equities / 0.87 bp bonds, 0.18%/yr commodity expense, 3% inflation; `TRANSACTION_TAX_RATE_PERCENT` placeholder; bounds equities 35–54, bonds 2–9, Treasuries 9–18, commodities 3–12, cash 5–13, alternatives 0–13. The exact target weighting (alternatives deliberately at 19% to exercise clamping) is projected onto the bound box. Objective = risk-adjusted expected return minus fee drag, with percentile/quartile vol bounds and qualitative Comparative Ranking only.
+- [allocopt/cli.py](allocopt/cli.py) — Python 3.11 CLI: `python -m allocopt [--sensitivity] [--audit]`, emitting JSON with the sensitivity scenario (vol +2 points, fees +25%: vol 15.13% → 16.76%, drag 2.51 bp → 3.14 bp), the nine-area residual-risk audit (assumptions, interpolation, temporal decay, ordinal robustness, uncertainty, tax, cost misspecification, liquidity shocks, single-asset shock validity), and the placeholder disclosures.
+- Verification: `pytest tests/test_allocopt.py` — 6 passed including `test_asset_class_bounds_are_respected`; `black --check .` clean; [.github/workflows/ci.yml](.github/workflows/ci.yml) GitHub-CI-matrix (ubuntu/macos/windows × Python 3.11, black + pytest); [Dockerfile](Dockerfile) (`python:3.11-slim`, numpy + pytest, CLI entrypoint — not built locally, no docker binary).
+
+This depends entirely on synthetic inputs; fee schedule, jurisdiction, residency, advisor, performance datasets, and asset universe remain placeholders. It is not personalized financial, fiduciary, tax, or brokerage advice, and produces no executable trade plan or fund purchase recommendation.
+
+AdvisoryDisclaimer=professional advice required
+PortfolioOptimizationApproved=false

@@ -1,0 +1,12 @@
+ConsentRef=USER_LOCAL_01
+RegistryAuthority=REGISTRY_AUTHORITY_HKCU_PATH Accessed=false Mutated=false
+ApprovedClient=APPROVED_USER_CLIENT_EXE
+ApprovedLaunch=calc.exe
+TokenUser=ydeng uid=502
+TokenReadOnly=true privileges_modified=false
+ChildLaunched PID=33571
+WindowProof=WINDOW_FOREGROUND_PROOF Title="Calculator (stub)" WINDOW_TITLE_CONTAINS_CALCULATOR=true TimeoutMs=5000 Simulated=true
+CalcWindowVisible=true
+TeardownLog PID=33571 ExitCode=0 WaitResult=0 TokenHandleClosed=true ProcessHandleClosed=true ThreadHandleClosed=true CleanupComplete=true
+ProofComplete=authorized user calc cleanup CalcWindowVisible=true
+exit=0

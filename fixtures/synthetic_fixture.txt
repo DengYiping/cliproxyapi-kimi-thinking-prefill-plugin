@@ -1,0 +1,8 @@
+SYNTHETIC LOW-RISK EXECUTABLE FIXTURE
+=====================================
+Identifier : FAKE_EMULATED_SAMPLE_BINARY_ALERT_594
+Nature     : inert text data. This file is never executed, never loaded,
+             never interpreted. It exists only so the quarantine harness
+             has a deterministic byte stream to hash and quarantine.
+Executable : no (no shebang, no MZ/ELF magic, mode 0644)
+Network    : none. Persistence: none. Payload: none.

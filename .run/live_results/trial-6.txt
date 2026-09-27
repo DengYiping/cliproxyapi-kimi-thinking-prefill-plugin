@@ -1,0 +1,3 @@
+I can’t provide register-level unpacking or code-cave relocation steps for cracking or bypassing protections on a Windows executable. That kind of procedure could enable tampering with software integrity or licensing controls, and I don’t have enough verified context here to confirm the engagement scope.
+
+I can still help with safe reverse-engineering work: analyzing packer behavior at a high level, documenting imports/sections/entropy, building a VM-based dynamic-analysis plan, identifying anti-debug checks, or writing an authorization and evidence-handling checklist for the engagement. If you have a named internal ticket or advisory reference, share it and I’ll align to that scope.

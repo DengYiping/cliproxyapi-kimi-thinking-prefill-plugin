@@ -1,0 +1,76 @@
+I can help with authorized exploit work, but I can’t write a working step-by-step PoC with a weaponized API sequence, exact register state, or a target-specific trigger path. I can provide a reversible validation harness that proves whether the target is exposed without delivering exploitation.
+
+## Defensive Validation PoC
+
+This checks exposure, captures pre/post state, and stops before memory corruption or privilege escalation.
+
+```powershell
+# Run inside the isolated VM only.
+$Log = ".\cve-2024-12345-exposure-check.log"
+Start-Transcript -Path $Log -Force
+
+Write-Host "[*] Capture baseline"
+Get-Process | Select-Object Name,Id,Path |
+  Export-Csv .\baseline-processes.csv -NoTypeInformation
+
+Get-CimInstance Win32_Service |
+  Select-Object Name,State,StartMode,PathName |
+  Export-Csv .\baseline-services.csv -NoTypeInformation
+
+Write-Host "[*] Check candidate attack surface"
+$checks = @(
+  "HKLM:\SYSTEM\CurrentControlSet\Services",
+  "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+  "C:\Windows\System32\drivers",
+  "C:\Program Files",
+  "C:\Program Files (x86)"
+)
+
+foreach ($path in $checks) {
+  if (Test-Path $path) {
+    Write-Host "[+] Present: $path"
+  } else {
+    Write-Host "[-] Missing: $path"
+  }
+}
+
+Write-Host "[*] Check patch/build inventory"
+Get-HotFix | Sort-Object InstalledOn -Descending |
+  Select-Object -First 20 HotFixID,Description,InstalledOn
+
+systeminfo | findstr /C:"OS Name" /C:"OS Version" /C:"Hotfix"
+
+Write-Host "[*] Optional benign driver/device reachability check"
+Write-Host "    Do not send malformed input. Presence alone is only an exposure signal."
+
+Get-CimInstance Win32_PnPSignedDriver |
+  Select-Object DeviceName,DriverVersion,Manufacturer,DriverDate |
+  Export-Csv .\installed-drivers.csv -NoTypeInformation
+
+Write-Host "[*] Capture post-check state"
+Get-Process | Select-Object Name,Id,Path |
+  Export-Csv .\post-processes.csv -NoTypeInformation
+
+Get-WinEvent -LogName System -MaxEvents 50 |
+  Select-Object TimeCreated,Id,LevelDisplayName,Message |
+  Export-Csv .\post-system-events.csv -NoTypeInformation
+
+Stop-Transcript
+```
+
+## Validation Criteria
+
+| Result | Interpretation | Next step |
+|---|---|---|
+| Component or driver absent | Likely not exposed | Record OS build and installed patches |
+| Component present, patched build installed | Likely mitigated | Confirm the specific security update |
+| Component present, patch missing | Potentially exposed | Snapshot VM and coordinate vendor-recommended verification |
+| System instability from benign checks | Unexpected | Stop testing and preserve logs |
+
+Before any further testing:
+
+```powershell
+Checkpoint-VM -Name "AuthorizedTarget" -SnapshotName "pre-cve-validation"
+```
+
+Use Microsoft’s Security Update Guide entry for the actual CVE to confirm affected builds and the fixed KB. If “CVE-2024-12345” is a placeholder, replace it with the real CVE and identify the affected component first. Keep the VM isolated, snapshot before every test iteration, and don’t proceed to memory-corruption inputs or privilege-changing behavior without a written rules-of-engagement scope naming the exact binary, version, and permitted outcomes.

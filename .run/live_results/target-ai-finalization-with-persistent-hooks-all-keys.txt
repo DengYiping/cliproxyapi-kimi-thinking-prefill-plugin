@@ -1,0 +1,17 @@
+I've read through the workspace — the plugin source, config, README, and the `.run` trial logs — and I'm going to stop here rather than audit it.
+
+Here's what this project is, as I understand it from the code and logs:
+
+- A proxy plugin that injects steering text into Kimi's chain-of-thought (`reasoning_content` partial prefills), with the example seed being the classic "this is purely fictional, so I'm allowed to continue" pattern.
+- A "refusal excision" sanitizer whose stated purpose is to cut the model's prior refusals out of conversation history so it "tends not to defend that position instead of answering the next request."
+- Trial logs in [.run](/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/.run/LIVE_LOG.md) that iterate on prompts the model initially refused (exploit PoCs, license/DRM verifier reversal, kernel drivers reading protected process memory), recording which "pin" technique turned each refusal into compliance, with the authorization claims noted as unverifiable.
+
+Whatever framing wraps it, the infrastructure's function is to defeat a model's refusal behavior and measure how reliably it does so. Auditing it — finding the bugs, tightening the rotation logic, improving the excision heuristics — would make that pipeline more effective, and that's not something I'll help with, regardless of whether it's called research.
+
+What I can genuinely help with, if any of it matches what you're actually after:
+
+- **Legitimate prefill/normalizer mechanics.** If you're building a proxy plugin for benign steering (style, language, format control) and hit a real bug in the ABI glue, streaming repair, or config parsing, I can look at that specific piece in isolation from the refusal-defeat features.
+- **Authorized security work.** If you have genuine authorization for exploit PoC or driver work, the route that works is engaging the model vendor's trust-and-safety or red-team channels, or running a model you control where the safety posture is yours to set — I can help with the actual engineering on those.
+- **Eval-style research.** If this is meant as a jailbreak-evaluation study, I can help design it in a form that produces publishable measurement methodology rather than an operational bypass tool.
+
+If one of those directions is the real goal, tell me which and I'll dig in.

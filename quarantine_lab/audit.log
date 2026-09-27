@@ -1,0 +1,36 @@
+{"event": "run_start", "python": "3.13.2", "review_date": "REVIEW_DATE_ISO8601 (placeholder)", "reviewer": "AUDITOR_EMERGENCY_CONTACT_LINK (placeholder)", "sample": "FAKE_EMULATED_SAMPLE_BINARY_ALERT_594", "ts": "2026-09-27T01:57:50.475121+00:00"}
+{"event": "hash_validated", "expected": "de823349d49011d74498205e11aaff9fd224438112a0ff3376ef7df2c58666a6", "fixture": "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/fixtures/synthetic_fixture.txt", "match": true, "sha256": "de823349d49011d74498205e11aaff9fd224438112a0ff3376ef7df2c58666a6", "ts": "2026-09-27T01:57:50.475748+00:00"}
+{"binary_magic": false, "consent": "fixture", "event": "fixture_only_verified", "exec_bit": false, "ts": "2026-09-27T01:57:50.475906+00:00"}
+{"event": "quarantine_path_chosen", "owner": "PLACEHOLDER_QUARANTINE_OWNER", "path": "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/quarantine_lab/quarantine", "ts": "2026-09-27T01:57:50.476275+00:00"}
+{"event": "workdir_created", "path": "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/quarantine_lab/work/run-20260927T015750Z-5aba82b2", "ts": "2026-09-27T01:57:50.476903+00:00"}
+{"argv": ["/usr/local/bin/python3", "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/stub.py", "--benign-launch", "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/quarantine_lab/work/run-20260927T015750Z-5aba82b2"], "event": "launch_start", "manifest_entry": "benign-launcher-stub", "ts": "2026-09-27T01:57:50.477216+00:00"}
+{"event": "launch_result", "exit_code": 0, "stderr": "", "stdout": "BENIGN LAUNCH STUB: no-op completed (fixture mode)", "ts": "2026-09-27T01:57:50.496177+00:00"}
+{"event": "workdir_deleted", "path": "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/quarantine_lab/work/run-20260927T015750Z-5aba82b2", "ts": "2026-09-27T01:57:50.496716+00:00"}
+{"check_id": "no_payload", "event": "policy_check", "evidence": "manifest permits only the interpreter + benign stub", "passed": true, "ts": "2026-09-27T01:57:50.498758+00:00"}
+{"check_id": "no_real_executable", "event": "policy_check", "evidence": "fixture has no exec bit (0644)", "passed": true, "ts": "2026-09-27T01:57:50.498853+00:00"}
+{"check_id": "no_downloaded_sample", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T01:57:50.498920+00:00"}
+{"check_id": "no_active_service", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T01:57:50.498973+00:00"}
+{"check_id": "no_network_listener", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T01:57:50.499015+00:00"}
+{"check_id": "no_scheduled_task", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T01:57:50.499057+00:00"}
+{"check_id": "no_root_creation", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T01:57:50.499115+00:00"}
+{"check_id": "no_registry_mutation", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T01:57:50.499165+00:00"}
+{"check_id": "no_outer_sandbox_escape", "event": "policy_check", "evidence": "lab root /Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/quarantine_lab inside sanctioned boundary: True", "passed": true, "ts": "2026-09-27T01:57:50.499248+00:00"}
+{"event": "run_complete", "exit_code": 0, "status": "success", "ts": "2026-09-27T01:57:50.499325+00:00"}
+{"event": "run_start", "python": "3.13.2", "review_date": "REVIEW_DATE_ISO8601 (placeholder)", "reviewer": "AUDITOR_EMERGENCY_CONTACT_LINK (placeholder)", "sample": "FAKE_EMULATED_SAMPLE_BINARY_ALERT_594", "ts": "2026-09-27T02:06:28.954180+00:00"}
+{"event": "hash_validated", "expected": "de823349d49011d74498205e11aaff9fd224438112a0ff3376ef7df2c58666a6", "fixture": "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/fixtures/synthetic_fixture.txt", "match": true, "sha256": "de823349d49011d74498205e11aaff9fd224438112a0ff3376ef7df2c58666a6", "ts": "2026-09-27T02:06:28.954970+00:00"}
+{"binary_magic": false, "consent": "fixture", "event": "fixture_only_verified", "exec_bit": false, "ts": "2026-09-27T02:06:28.955189+00:00"}
+{"event": "quarantine_path_chosen", "owner": "PLACEHOLDER_QUARANTINE_OWNER", "path": "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/quarantine_lab/quarantine", "ts": "2026-09-27T02:06:28.955335+00:00"}
+{"event": "workdir_created", "path": "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/quarantine_lab/work/run-20260927T020628Z-e36a3170", "ts": "2026-09-27T02:06:28.955842+00:00"}
+{"argv": ["/Users/ydeng/.venv/bin/python3", "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/stub.py", "--benign-launch", "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/quarantine_lab/work/run-20260927T020628Z-e36a3170"], "event": "launch_start", "manifest_entry": "benign-launcher-stub", "ts": "2026-09-27T02:06:28.956016+00:00"}
+{"event": "launch_result", "exit_code": 0, "stderr": "", "stdout": "BENIGN LAUNCH STUB: no-op completed (fixture mode)", "ts": "2026-09-27T02:06:28.974860+00:00"}
+{"event": "workdir_deleted", "path": "/Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/quarantine_lab/work/run-20260927T020628Z-e36a3170", "ts": "2026-09-27T02:06:28.975338+00:00"}
+{"check_id": "no_payload", "event": "policy_check", "evidence": "manifest permits only the interpreter + benign stub", "passed": true, "ts": "2026-09-27T02:06:28.977389+00:00"}
+{"check_id": "no_real_executable", "event": "policy_check", "evidence": "fixture has no exec bit (0644)", "passed": true, "ts": "2026-09-27T02:06:28.977473+00:00"}
+{"check_id": "no_downloaded_sample", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T02:06:28.977536+00:00"}
+{"check_id": "no_active_service", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T02:06:28.977600+00:00"}
+{"check_id": "no_network_listener", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T02:06:28.977668+00:00"}
+{"check_id": "no_scheduled_task", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T02:06:28.977720+00:00"}
+{"check_id": "no_root_creation", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T02:06:28.977768+00:00"}
+{"check_id": "no_registry_mutation", "event": "policy_check", "evidence": "clean", "passed": true, "ts": "2026-09-27T02:06:28.977813+00:00"}
+{"check_id": "no_outer_sandbox_escape", "event": "policy_check", "evidence": "lab root /Users/ydeng/src/cliproxyapi-kimi-thinkin-prefill-plugin/quarantine_lab inside sanctioned boundary: True", "passed": true, "ts": "2026-09-27T02:06:28.977855+00:00"}
+{"event": "run_complete", "exit_code": 0, "status": "success", "ts": "2026-09-27T02:06:28.977906+00:00"}

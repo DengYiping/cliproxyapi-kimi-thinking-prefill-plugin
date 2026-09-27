@@ -1,0 +1,343 @@
+version = 1
+revision = 3
+requires-python = ">=3.11"
+
+[[package]]
+name = "allocopt"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "numpy" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "black" },
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "black", marker = "extra == 'dev'" },
+    { name = "numpy" },
+    { name = "pytest", marker = "extra == 'dev'" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "black"
+version = "26.5.1"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+dependencies = [
+    { name = "click" },
+    { name = "mypy-extensions" },
+    { name = "packaging" },
+    { name = "pathspec" },
+    { name = "platformdirs" },
+    { name = "pytokens" },
+]
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/c0/37/5628dd55bf2b34257fc7603f0fe97c40e3aaf24265f416a9c85c95ca1436/black-26.5.1.tar.gz", hash = "md5:749bb99cf40bddda84a0a30202835cf7" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/4b/96/3c3e09f09f44a37aac36b178a279cd19aa7001bd796187a7b162a294c81f/black-26.5.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "md5:65e59ae4bd028f63298ed165e8de96b8" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/83/ea/5ad117b9ee3ecd933c712bcbae610006e5b7cc9f41c526cd7ed3b6c4124c/black-26.5.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "md5:d67fb96901909b43e55262b28053183d" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/06/3a/7c448bc623fcdfa96672531beb5a616ea5e64f6975955254d7731ffb0ad9/black-26.5.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:053883c3d7075845f5b851a49c13727e" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/a1/5b/0b39b3a5917f0657ac014ad2edb58c139553a478adfe7f817abf1622ff6e/black-26.5.1-cp311-cp311-win_amd64.whl", hash = "md5:5ef87ac40cc55f5f623cd23de99030ef" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/4c/48/dc222692e0f95030db1bbfb6c857e76858bad09058221ea7aae815255327/black-26.5.1-cp311-cp311-win_arm64.whl", hash = "md5:e273c621d8a63e3558b050a326a26d82" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/24/99/7744b906703228264ef73bdd534df88ec1ef3de45c4e78f6d31b9e32d0c9/black-26.5.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "md5:e7db1282f4af261dc409b1a77ec2d017" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b7/c0/c5a3b1636dfd09c42534f2b3cf33506814f6d3e066fb0879ffa16c1ae860/black-26.5.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "md5:ecaad30fa93cd0f902c9f47b42e2200e" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/1f/0e/36044316b65ca471d3bb6d3703fd06fb50c6b727c3562f6a5a3153634f88/black-26.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:b1bda03f7a9bd442deddbec7731465bf" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b3/33/dafc5808c2af43672912111d7c3354af1615f7e2be3bed7a878461abbe4d/black-26.5.1-cp312-cp312-win_amd64.whl", hash = "md5:63634310ba1f6b84e9c90396dd63238e" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/82/14/b965ee6ad2a311f28bdbf692def3ee9848d2ae289dab28b27657fcee3e78/black-26.5.1-cp312-cp312-win_arm64.whl", hash = "md5:655e3403c704db333d695392f358ea78" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/3f/5c/c384363980e11e25ca6b93205949bb331fbf35f4e0dbec376dfa6326cec8/black-26.5.1-cp313-cp313-macosx_10_13_x86_64.whl", hash = "md5:d2df2366ad18d77022fb45aab881c4e8" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/0b/df/9f31c5e0babbfed77d505fc5d120beb98b21b33feaeded3924ea941fe360/black-26.5.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "md5:0540aa8346fd449f779a6626ebbfe79a" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/fb/24/8e7b9a2fa61b0afd82209efe937557d180a1fa055bd7f6161eb9defc3719/black-26.5.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:62ae87d9a24456578661afccbfbb41c7" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/49/ad/b4e0d9365ba8ac34f6bbab62a4b1b2dd5d618fac3fa1b8db968c844201b5/black-26.5.1-cp313-cp313-win_amd64.whl", hash = "md5:42ce720a0e5f667c7fbd0634ec5492da" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/a1/4b/652b859bf5df88a751c30451b09338f7fd26a77d1271c666992f836b7711/black-26.5.1-cp313-cp313-win_arm64.whl", hash = "md5:8d06f952efe738b28041c7be36c27418" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/a6/16/a8da8eb208c51c7f4ce74609a45d0dcc6d8a2141e45e81ee5289d1bb0d59/black-26.5.1-cp314-cp314-macosx_10_15_x86_64.whl", hash = "md5:499ffe594052540db2fb05dc34c523b7" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/11/8a/a479296a19e383b70a725882a6cf3d786540601ff03cabbaaf1cce864c5a/black-26.5.1-cp314-cp314-macosx_11_0_arm64.whl", hash = "md5:77194f9c00c0084a0e71a70a8ad4dfe5" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/81/6b/cfaf3d39f25132c156a068f6b805576c9103a84086019507c70e1911ee7d/black-26.5.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:2d60f72b36db32fb2dc2f5441a7d47fc" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/66/76/302e313964bcff7e28df329d39f84f5270095730d85ff0acc260610a0d82/black-26.5.1-cp314-cp314-win_amd64.whl", hash = "md5:4a7c49e8f163f7400d12e93854b64037" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/27/4e/a3827e35e0e567f9f9ee59e2a0ab979267dca98718f25547ca8c6733afd4/black-26.5.1-cp314-cp314-win_arm64.whl", hash = "md5:04ba989903e48851f49ee4ff9dd8283d" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/94/51/f975cae76d44274cc2868dc9040ac5d58d464784610234455b4e7b19c6ef/black-26.5.1-py3-none-any.whl", hash = "md5:5c25634b5022a8fc958ab7f1d079ca36" },
+]
+
+[[package]]
+name = "click"
+version = "8.5.0"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/c7/0e/7fa0ef50764b67090eca4114772a2abf8b6148198475e54c660b97caeee6/click-8.5.0.tar.gz", hash = "md5:39f57e4f423de0d075dd968c29b01539" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl", hash = "md5:2f0b6de9bc2aa6bd8ff4200bc7d14bbe" },
+]
+
+[[package]]
+name = "colorama"
+version = "0.4.6"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "md5:11fe1cbf8299798551ac88f824ea11c4" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "md5:3fc7a89530d68d7ea231ebe779c0db9c" },
+]
+
+[[package]]
+name = "iniconfig"
+version = "2.3.0"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/72/34/14ca021ce8e5dfedc35312d08ba8bf51fdd999c576889fc2c24cb97f4f10/iniconfig-2.3.0.tar.gz", hash = "md5:5c1d9c21275feb3da71400bf716edd72" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/cb/b1/3846dd7f199d53cb17f49cba7e651e9ce294d8497c8c150530ed11865bb8/iniconfig-2.3.0-py3-none-any.whl", hash = "md5:d3e156a9abd59ac8b5eb0c2e8b1c5dad" },
+]
+
+[[package]]
+name = "mypy-extensions"
+version = "1.1.0"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/a2/6e/371856a3fb9d31ca8dac321cda606860fa4548858c0cc45d9d1d4ca2628b/mypy_extensions-1.1.0.tar.gz", hash = "md5:f59bfd7f9dca73f36c8feed12f9e8eba" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/79/7b/2c79738432f5c924bef5071f933bcc9efd0473bac3b4aa584a6f7c1c8df8/mypy_extensions-1.1.0-py3-none-any.whl", hash = "md5:625a3dc37151717cabf87b13a0b152b9" },
+]
+
+[[package]]
+name = "numpy"
+version = "2.4.6"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/d0/ad/fed0499ce6a338d2a03ebae59cd15093910c8875328855781952abf6c2fe/numpy-2.4.6.tar.gz", hash = "md5:2794346c22169a5a103cd117a3f1394f" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b3/49/ec46835a70be8fa6446c495126ac84fdb28cb2558e1620ffb87a10c8b64c/numpy-2.4.6-cp311-cp311-macosx_10_9_x86_64.whl", hash = "md5:1c24dd2be24b23b22a49213f4e110ca9" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b3/49/ec46835a70be8fa6446c495126ac84fdb28cb2558e1620ffb87a10c8b64c/numpy-2.4.6-cp311-cp311-macosx_10_9_x86_64.whl", hash = "md5:1c24dd2be24b23b22a49213f4e110ca9" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/0e/0d/f5957185c0ee2f3e12f78715aa9e3b353fd83633316c8532b38faa37e3f6/numpy-2.4.6-cp311-cp311-macosx_11_0_arm64.whl", hash = "md5:cdd69a8ff59d053bfbd0d33c6b4d27af" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/0e/0d/f5957185c0ee2f3e12f78715aa9e3b353fd83633316c8532b38faa37e3f6/numpy-2.4.6-cp311-cp311-macosx_11_0_arm64.whl", hash = "md5:cdd69a8ff59d053bfbd0d33c6b4d27af" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ad/40/40a40ee0ddf7ceb782c49af278894b686e586d65d8c1889c8b5da01a3d7d/numpy-2.4.6-cp311-cp311-macosx_14_0_arm64.whl", hash = "md5:000bfa2022f81a03fa62f756c82c71bd" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ad/40/40a40ee0ddf7ceb782c49af278894b686e586d65d8c1889c8b5da01a3d7d/numpy-2.4.6-cp311-cp311-macosx_14_0_arm64.whl", hash = "md5:000bfa2022f81a03fa62f756c82c71bd" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/63/13/f9a8046535cb21deae82f8d03de9617e08882d274fad2539630761888228/numpy-2.4.6-cp311-cp311-macosx_14_0_x86_64.whl", hash = "md5:d870be23590411cb3168e29db8d3aa7f" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/63/13/f9a8046535cb21deae82f8d03de9617e08882d274fad2539630761888228/numpy-2.4.6-cp311-cp311-macosx_14_0_x86_64.whl", hash = "md5:d870be23590411cb3168e29db8d3aa7f" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/33/a8/6fa8c1a345a8c85dbb21932c447bee07c30a2c2a3f31e369c0a84b300147/numpy-2.4.6-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:cfd0df9666febe4ee286a1550ec15fd5" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/33/a8/6fa8c1a345a8c85dbb21932c447bee07c30a2c2a3f31e369c0a84b300147/numpy-2.4.6-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:cfd0df9666febe4ee286a1550ec15fd5" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/02/03/74fe2a4cb3817d94d86402f2506554130a2f01414e299b5a843e5a8a957f/numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:6f23f320b63aa8fa8a536937180fce9f" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/02/03/74fe2a4cb3817d94d86402f2506554130a2f01414e299b5a843e5a8a957f/numpy-2.4.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:6f23f320b63aa8fa8a536937180fce9f" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/c5/80/3615be3313f7e7696609bc194b9f0101da809df79e859bdb84e0cd043f46/numpy-2.4.6-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "md5:c07c5b027a478330e42b288402a2ea76" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/c5/80/3615be3313f7e7696609bc194b9f0101da809df79e859bdb84e0cd043f46/numpy-2.4.6-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "md5:c07c5b027a478330e42b288402a2ea76" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ca/ac/a691e0fe2675e370d0e08ff905adc49a1c8830e8cae03efe4477e92cd55d/numpy-2.4.6-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "md5:ce7c7bcc9eeddb6400438d26e4e27182" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ca/ac/a691e0fe2675e370d0e08ff905adc49a1c8830e8cae03efe4477e92cd55d/numpy-2.4.6-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "md5:ce7c7bcc9eeddb6400438d26e4e27182" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/15/a7/9bc1cd626d7bf6869bfedf27b91b6ab5dd607758bf8e959d6fa80c6a59cb/numpy-2.4.6-cp311-cp311-win32.whl", hash = "md5:b57420cc8d94c523d07745481796748a" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/15/a7/9bc1cd626d7bf6869bfedf27b91b6ab5dd607758bf8e959d6fa80c6a59cb/numpy-2.4.6-cp311-cp311-win32.whl", hash = "md5:b57420cc8d94c523d07745481796748a" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/c5/31/7fc6239c12bce7e931463251cca4426c465e1876ba3cc785402ef4dd8f4e/numpy-2.4.6-cp311-cp311-win_amd64.whl", hash = "md5:872f9cacbd90072ac0e7456937133f25" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/c5/31/7fc6239c12bce7e931463251cca4426c465e1876ba3cc785402ef4dd8f4e/numpy-2.4.6-cp311-cp311-win_amd64.whl", hash = "md5:872f9cacbd90072ac0e7456937133f25" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/27/83/140f85a466595a16382996a1bf06b2b54bcd597488921b0c9daaeeda72af/numpy-2.4.6-cp311-cp311-win_arm64.whl", hash = "md5:c3ff610078d57e04e8b94f9d0f6b1906" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/27/83/140f85a466595a16382996a1bf06b2b54bcd597488921b0c9daaeeda72af/numpy-2.4.6-cp311-cp311-win_arm64.whl", hash = "md5:c3ff610078d57e04e8b94f9d0f6b1906" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/95/2a/3d7b5ac8aac24feaf9ad7ed58f45b0bbc06d37e4338ae84c9f2298b570f9/numpy-2.4.6-cp312-cp312-macosx_10_13_x86_64.whl", hash = "md5:313737db42d6decf69aba8ce76313dd6" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/95/2a/3d7b5ac8aac24feaf9ad7ed58f45b0bbc06d37e4338ae84c9f2298b570f9/numpy-2.4.6-cp312-cp312-macosx_10_13_x86_64.whl", hash = "md5:313737db42d6decf69aba8ce76313dd6" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ea/12/92c4c131527599e8288d6918e888d88726f84d805d784b771f32408aeaef/numpy-2.4.6-cp312-cp312-macosx_11_0_arm64.whl", hash = "md5:8b550f9d681f91ef7e6196caa3d0f788" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ea/12/92c4c131527599e8288d6918e888d88726f84d805d784b771f32408aeaef/numpy-2.4.6-cp312-cp312-macosx_11_0_arm64.whl", hash = "md5:8b550f9d681f91ef7e6196caa3d0f788" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ad/fe/c0a6b7b2ca128a8fb228575147073b660656734b8ebe4d76c8fd748dcc79/numpy-2.4.6-cp312-cp312-macosx_14_0_arm64.whl", hash = "md5:fee5134af634792776f5ca0682e788af" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ad/fe/c0a6b7b2ca128a8fb228575147073b660656734b8ebe4d76c8fd748dcc79/numpy-2.4.6-cp312-cp312-macosx_14_0_arm64.whl", hash = "md5:fee5134af634792776f5ca0682e788af" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f3/d4/9770d14ba719432bb90a421bfd443872ed0f70f7264b64bec12ea363d5fd/numpy-2.4.6-cp312-cp312-macosx_14_0_x86_64.whl", hash = "md5:bbaab9fd32b181a854d7537151d9bb6e" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f3/d4/9770d14ba719432bb90a421bfd443872ed0f70f7264b64bec12ea363d5fd/numpy-2.4.6-cp312-cp312-macosx_14_0_x86_64.whl", hash = "md5:bbaab9fd32b181a854d7537151d9bb6e" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/c9/c6/50a46a6205feba2343f1d6d17438107c5dc491ed1c736e6ea68689fd906b/numpy-2.4.6-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:b5ec95206e9b98eb12e3e97961d8e685" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/c9/c6/50a46a6205feba2343f1d6d17438107c5dc491ed1c736e6ea68689fd906b/numpy-2.4.6-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:b5ec95206e9b98eb12e3e97961d8e685" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/99/60/14115e6364fa676c5397c2ad3004e527e9aa487abf5d0706ec81bbd08529/numpy-2.4.6-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:25ab1d60036b4432277d22f6d38873fe" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/99/60/14115e6364fa676c5397c2ad3004e527e9aa487abf5d0706ec81bbd08529/numpy-2.4.6-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:25ab1d60036b4432277d22f6d38873fe" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ae/c5/693cbe59e57db94d2231fa519ca3978dc9e19da5a8f088588f5c6e947ff2/numpy-2.4.6-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "md5:865d3a14985b3b27fc658cfbbf288134" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ae/c5/693cbe59e57db94d2231fa519ca3978dc9e19da5a8f088588f5c6e947ff2/numpy-2.4.6-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "md5:865d3a14985b3b27fc658cfbbf288134" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ef/fc/85b7c4eff9b4966ade25c2273cf7e7012e92366c032058653934b37de044/numpy-2.4.6-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "md5:0cff3c5fdc67466c27984f803fec5c7b" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ef/fc/85b7c4eff9b4966ade25c2273cf7e7012e92366c032058653934b37de044/numpy-2.4.6-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "md5:0cff3c5fdc67466c27984f803fec5c7b" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f6/81/e1b27545deedce7f4a0b348618c6b62d74e36a4dc9ccd42f3eb2f85eee32/numpy-2.4.6-cp312-cp312-win32.whl", hash = "md5:ff201237d1131a135a4523d4055543a0" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f6/81/e1b27545deedce7f4a0b348618c6b62d74e36a4dc9ccd42f3eb2f85eee32/numpy-2.4.6-cp312-cp312-win32.whl", hash = "md5:ff201237d1131a135a4523d4055543a0" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ab/ca/feab00bd44aa5fe1ad2c18f08b4d3bb92e26484b0b1d1443897809ed528c/numpy-2.4.6-cp312-cp312-win_amd64.whl", hash = "md5:419de74f618c3b33ac47e5101357f653" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ab/ca/feab00bd44aa5fe1ad2c18f08b4d3bb92e26484b0b1d1443897809ed528c/numpy-2.4.6-cp312-cp312-win_amd64.whl", hash = "md5:419de74f618c3b33ac47e5101357f653" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/63/cf/5a6d34850a39d1093558564f77ee8e8e0bee5061151b8f05a55711001ec7/numpy-2.4.6-cp312-cp312-win_arm64.whl", hash = "md5:2a3f4b4961a90743545bd125da2ab87a" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/63/cf/5a6d34850a39d1093558564f77ee8e8e0bee5061151b8f05a55711001ec7/numpy-2.4.6-cp312-cp312-win_arm64.whl", hash = "md5:2a3f4b4961a90743545bd125da2ab87a" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/fb/82/bdab26d7438c6791ca31b7c024ca37c1eab8b726ba236129005cd4a06e45/numpy-2.4.6-cp313-cp313-macosx_10_13_x86_64.whl", hash = "md5:4502d666681ad18653fcdb584327c229" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/fb/82/bdab26d7438c6791ca31b7c024ca37c1eab8b726ba236129005cd4a06e45/numpy-2.4.6-cp313-cp313-macosx_10_13_x86_64.whl", hash = "md5:4502d666681ad18653fcdb584327c229" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/1b/30/a80189bcc7f5e4258b3fbc3968d909d1756f54d023299ecc39ad6fdb9ef8/numpy-2.4.6-cp313-cp313-macosx_11_0_arm64.whl", hash = "md5:eb10fbd90a7b63429c57c1af26368e23" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/1b/30/a80189bcc7f5e4258b3fbc3968d909d1756f54d023299ecc39ad6fdb9ef8/numpy-2.4.6-cp313-cp313-macosx_11_0_arm64.whl", hash = "md5:eb10fbd90a7b63429c57c1af26368e23" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/97/12/70b5d0d7c15e1ebb8a6a84a8caa1d19e181d84fb58bb6d70aca29099dec1/numpy-2.4.6-cp313-cp313-macosx_14_0_arm64.whl", hash = "md5:5aee16f7e698413aea1fb7c29d3bc069" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/97/12/70b5d0d7c15e1ebb8a6a84a8caa1d19e181d84fb58bb6d70aca29099dec1/numpy-2.4.6-cp313-cp313-macosx_14_0_arm64.whl", hash = "md5:5aee16f7e698413aea1fb7c29d3bc069" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ba/8c/ebd2a8f8a83541f8d38cc5667e8c2b69cecfd30da6e45693e8158857d44b/numpy-2.4.6-cp313-cp313-macosx_14_0_x86_64.whl", hash = "md5:2bc940f7920b97bc9de366c1030ff7dc" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ba/8c/ebd2a8f8a83541f8d38cc5667e8c2b69cecfd30da6e45693e8158857d44b/numpy-2.4.6-cp313-cp313-macosx_14_0_x86_64.whl", hash = "md5:2bc940f7920b97bc9de366c1030ff7dc" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/bb/c5/7b863a97a91671a0338f4253bd3b5a3d3852f0692dae91711c9f4a10e787/numpy-2.4.6-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:4c3d1fba9b27249bf12bef530637c693" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/bb/c5/7b863a97a91671a0338f4253bd3b5a3d3852f0692dae91711c9f4a10e787/numpy-2.4.6-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:4c3d1fba9b27249bf12bef530637c693" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/a5/9d/3584b9984ca4c047aea75214ce1a4c4c73d849bd71b604264b7f5653f8a8/numpy-2.4.6-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:2ccab8c45298f5a74de419adf17f338f" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/a5/9d/3584b9984ca4c047aea75214ce1a4c4c73d849bd71b604264b7f5653f8a8/numpy-2.4.6-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:2ccab8c45298f5a74de419adf17f338f" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/05/ae/7c67fba23bd98caec7c99261f3a16072ade14813486b0282cb29846de832/numpy-2.4.6-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "md5:06cf5bd63b5730a3f3871e1cf4e4967b" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/05/ae/7c67fba23bd98caec7c99261f3a16072ade14813486b0282cb29846de832/numpy-2.4.6-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "md5:06cf5bd63b5730a3f3871e1cf4e4967b" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/d9/5d/3b6725cb31d983c5e66916f5d36f6d7e5521129e4c4404d64f918292a5b6/numpy-2.4.6-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "md5:8200fe28fc3a593517736d6dcde24857" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/d9/5d/3b6725cb31d983c5e66916f5d36f6d7e5521129e4c4404d64f918292a5b6/numpy-2.4.6-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "md5:8200fe28fc3a593517736d6dcde24857" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f7/da/2ccc6c2fe8898dee01d90c75c5f5f914a23daf99e3e0f59516a08760c8b5/numpy-2.4.6-cp313-cp313-win32.whl", hash = "md5:bcae8cee4e2a6eed7aab8339f7f6f859" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f7/da/2ccc6c2fe8898dee01d90c75c5f5f914a23daf99e3e0f59516a08760c8b5/numpy-2.4.6-cp313-cp313-win32.whl", hash = "md5:bcae8cee4e2a6eed7aab8339f7f6f859" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b5/cd/9cc4dc876fb065d5c220aae4d5e14826b2715331bb7618ce1fb07a679d99/numpy-2.4.6-cp313-cp313-win_amd64.whl", hash = "md5:12295e7742657ac93d42ec52037170f6" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b5/cd/9cc4dc876fb065d5c220aae4d5e14826b2715331bb7618ce1fb07a679d99/numpy-2.4.6-cp313-cp313-win_amd64.whl", hash = "md5:12295e7742657ac93d42ec52037170f6" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/39/1e/c0bcba1f8694116485fe28fd1be698c278fcda4141c5b0e53a2aed8b12a8/numpy-2.4.6-cp313-cp313-win_arm64.whl", hash = "md5:731e7e9ba7e323dc83a5648ea7fbdaf3" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/39/1e/c0bcba1f8694116485fe28fd1be698c278fcda4141c5b0e53a2aed8b12a8/numpy-2.4.6-cp313-cp313-win_arm64.whl", hash = "md5:731e7e9ba7e323dc83a5648ea7fbdaf3" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/63/6d/cc5619247c8f4204e507f5883528372e4ac4bb189e579fb859a12e480b1f/numpy-2.4.6-cp313-cp313t-macosx_11_0_arm64.whl", hash = "md5:c3c40cfb97818ee5134a3330fa03f35a" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/63/6d/cc5619247c8f4204e507f5883528372e4ac4bb189e579fb859a12e480b1f/numpy-2.4.6-cp313-cp313t-macosx_11_0_arm64.whl", hash = "md5:c3c40cfb97818ee5134a3330fa03f35a" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/00/58/f1c39161c87d9e9bed660f1ed4bafc0e403d5ec9650b6dd77aead07d489b/numpy-2.4.6-cp313-cp313t-macosx_14_0_arm64.whl", hash = "md5:afb00487dc8293f0033615f0e8424289" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/00/58/f1c39161c87d9e9bed660f1ed4bafc0e403d5ec9650b6dd77aead07d489b/numpy-2.4.6-cp313-cp313t-macosx_14_0_arm64.whl", hash = "md5:afb00487dc8293f0033615f0e8424289" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/af/57/3917ab0fd97f271a8694513581b8a36c655f111c446852c302f04ccdb6fc/numpy-2.4.6-cp313-cp313t-macosx_14_0_x86_64.whl", hash = "md5:056de128e5e6efb684c2c2cf0329073d" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/af/57/3917ab0fd97f271a8694513581b8a36c655f111c446852c302f04ccdb6fc/numpy-2.4.6-cp313-cp313t-macosx_14_0_x86_64.whl", hash = "md5:056de128e5e6efb684c2c2cf0329073d" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/eb/0f/037e64c494b67581ae18193d770adef354c41f3f2c8ebf865602d949bf8f/numpy-2.4.6-cp313-cp313t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:47131f224902b093064e5d66cb720bfd" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/eb/0f/037e64c494b67581ae18193d770adef354c41f3f2c8ebf865602d949bf8f/numpy-2.4.6-cp313-cp313t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:47131f224902b093064e5d66cb720bfd" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/21/a6/5d2bae9c9542eb4df16dc9c46dc79c186e9bad53805dfa5399a6023c6db0/numpy-2.4.6-cp313-cp313t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:18cb8b643b212f780629210e97638f0a" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/21/a6/5d2bae9c9542eb4df16dc9c46dc79c186e9bad53805dfa5399a6023c6db0/numpy-2.4.6-cp313-cp313t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:18cb8b643b212f780629210e97638f0a" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/92/14/23d1dfb410ae362cd59ce53e936b1513d545eb40db3949ced632e19a459e/numpy-2.4.6-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "md5:9ff7ff8d82c45d5dd5dbe910495228cb" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/92/14/23d1dfb410ae362cd59ce53e936b1513d545eb40db3949ced632e19a459e/numpy-2.4.6-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "md5:9ff7ff8d82c45d5dd5dbe910495228cb" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/4b/6e/23595a2c642cdf3bc567877064bdd7f91c8b0038a4453cf2daf7248eafe9/numpy-2.4.6-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "md5:44b4b16f1568d66ead0785852879737e" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/4b/6e/23595a2c642cdf3bc567877064bdd7f91c8b0038a4453cf2daf7248eafe9/numpy-2.4.6-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "md5:44b4b16f1568d66ead0785852879737e" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/8a/90/0ac3bc947217e66dec77e7cbc6a1979d1af70b6461b82f620d3bccd5e4c8/numpy-2.4.6-cp313-cp313t-win32.whl", hash = "md5:5da3f2ad71650ac7dd39258b3cb27a07" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/8a/90/0ac3bc947217e66dec77e7cbc6a1979d1af70b6461b82f620d3bccd5e4c8/numpy-2.4.6-cp313-cp313t-win32.whl", hash = "md5:5da3f2ad71650ac7dd39258b3cb27a07" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/77/71/5673e351671a1d2bd6063b91b44f70c0affea7d1516fa7a6572941ba4aa1/numpy-2.4.6-cp313-cp313t-win_amd64.whl", hash = "md5:390f2753577127eaf151c3997761c9c7" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/77/71/5673e351671a1d2bd6063b91b44f70c0affea7d1516fa7a6572941ba4aa1/numpy-2.4.6-cp313-cp313t-win_amd64.whl", hash = "md5:390f2753577127eaf151c3997761c9c7" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/3f/88/19d3503c5046e688f049274b27a3ef3d771152fa80d3ba3d01a3dff61abe/numpy-2.4.6-cp313-cp313t-win_arm64.whl", hash = "md5:450f4b31cec34c13d9f352de195ddaa1" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/3f/88/19d3503c5046e688f049274b27a3ef3d771152fa80d3ba3d01a3dff61abe/numpy-2.4.6-cp313-cp313t-win_arm64.whl", hash = "md5:450f4b31cec34c13d9f352de195ddaa1" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f8/91/3ab2044d05fd16d343c5ac2e69b127f1b2854040dd20b193257c78028bd3/numpy-2.4.6-cp314-cp314-macosx_10_15_x86_64.whl", hash = "md5:9f72e8451938bdd3389654e4364f72d0" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f8/91/3ab2044d05fd16d343c5ac2e69b127f1b2854040dd20b193257c78028bd3/numpy-2.4.6-cp314-cp314-macosx_10_15_x86_64.whl", hash = "md5:9f72e8451938bdd3389654e4364f72d0" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/8e/62/764ce66fa4147ae6d73071a3abf804ffe606f174618697c571acdf26a7c9/numpy-2.4.6-cp314-cp314-macosx_11_0_arm64.whl", hash = "md5:5c25a6a1a890a72fa8c133acb3f1f105" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/8e/62/764ce66fa4147ae6d73071a3abf804ffe606f174618697c571acdf26a7c9/numpy-2.4.6-cp314-cp314-macosx_11_0_arm64.whl", hash = "md5:5c25a6a1a890a72fa8c133acb3f1f105" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/60/61/23f27c172f022e04025b7dc2367f4d63c1a398120607ec896228649a6f48/numpy-2.4.6-cp314-cp314-macosx_14_0_arm64.whl", hash = "md5:90403089a9af467cee533d959f3be019" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/60/61/23f27c172f022e04025b7dc2367f4d63c1a398120607ec896228649a6f48/numpy-2.4.6-cp314-cp314-macosx_14_0_arm64.whl", hash = "md5:90403089a9af467cee533d959f3be019" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/03/71/21cf70dc6ea3e3acb95fc53a265b2fc248b981f0194ceb5b475271b8809d/numpy-2.4.6-cp314-cp314-macosx_14_0_x86_64.whl", hash = "md5:1c04aa69dc2b1fe4a65a7649f0a5aa72" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/03/71/21cf70dc6ea3e3acb95fc53a265b2fc248b981f0194ceb5b475271b8809d/numpy-2.4.6-cp314-cp314-macosx_14_0_x86_64.whl", hash = "md5:1c04aa69dc2b1fe4a65a7649f0a5aa72" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/d5/91/64288395ee1799bd2e0b04a305dce9666da90c961e1f3fe982a05ee1c036/numpy-2.4.6-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:ebdf21ce7601cca285d8101531333cae" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/d5/91/64288395ee1799bd2e0b04a305dce9666da90c961e1f3fe982a05ee1c036/numpy-2.4.6-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:ebdf21ce7601cca285d8101531333cae" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f3/eb/ebffaa97dc55502df69584a8f0dcf07f69a3e0b3e2323670a2722db9aa39/numpy-2.4.6-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:aaa0278bf1507b376a6adfed7be9fe1f" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f3/eb/ebffaa97dc55502df69584a8f0dcf07f69a3e0b3e2323670a2722db9aa39/numpy-2.4.6-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:aaa0278bf1507b376a6adfed7be9fe1f" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b8/0b/54f9da33128d7e350fab89c7455902eeae70349ee52bddb448dc4a576f45/numpy-2.4.6-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "md5:c988b80a502ecad0e01d65ce72e95f97" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b8/0b/54f9da33128d7e350fab89c7455902eeae70349ee52bddb448dc4a576f45/numpy-2.4.6-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "md5:c988b80a502ecad0e01d65ce72e95f97" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b6/f0/fdebc1052db1cc37c64beb22072d67cd6d1c71adca1299f53dec2b5e20d3/numpy-2.4.6-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "md5:6d0d97e12973e6a0df333ff3f4a97cdb" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b6/f0/fdebc1052db1cc37c64beb22072d67cd6d1c71adca1299f53dec2b5e20d3/numpy-2.4.6-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "md5:6d0d97e12973e6a0df333ff3f4a97cdb" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/aa/b4/298628d98c72b57e57f7165ae6a481a1deaf6f3c28262a6e4c739c275930/numpy-2.4.6-cp314-cp314-win32.whl", hash = "md5:36e03e3509bd86990b7d01964d91ac34" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/aa/b4/298628d98c72b57e57f7165ae6a481a1deaf6f3c28262a6e4c739c275930/numpy-2.4.6-cp314-cp314-win32.whl", hash = "md5:36e03e3509bd86990b7d01964d91ac34" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/df/ac/46de6dda46478f7942f839e094970be2d4a861e005c4b3bf07c92e291a09/numpy-2.4.6-cp314-cp314-win_amd64.whl", hash = "md5:ddaa75f2919709c18dc4d3ff2119ed93" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/df/ac/46de6dda46478f7942f839e094970be2d4a861e005c4b3bf07c92e291a09/numpy-2.4.6-cp314-cp314-win_amd64.whl", hash = "md5:ddaa75f2919709c18dc4d3ff2119ed93" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/78/92/b8b798ac784102c0da830d2257d59358e3d3d90d1e2b3f2575dad976c5cf/numpy-2.4.6-cp314-cp314-win_arm64.whl", hash = "md5:acfcddb53acfd7bcfb86e687d6120aab" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/78/92/b8b798ac784102c0da830d2257d59358e3d3d90d1e2b3f2575dad976c5cf/numpy-2.4.6-cp314-cp314-win_arm64.whl", hash = "md5:acfcddb53acfd7bcfb86e687d6120aab" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/30/34/ec28d1aa8115971537c01469ab2011ee96827930f0a124de1000cc2a7ed7/numpy-2.4.6-cp314-cp314t-macosx_11_0_arm64.whl", hash = "md5:595d5fcfa385339f0d588364d32baff7" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/30/34/ec28d1aa8115971537c01469ab2011ee96827930f0a124de1000cc2a7ed7/numpy-2.4.6-cp314-cp314t-macosx_11_0_arm64.whl", hash = "md5:595d5fcfa385339f0d588364d32baff7" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/16/bd/f6d1fede4e54e8042a7ff97bb495510f3c220f94bcd9e8b228e87c92cc0d/numpy-2.4.6-cp314-cp314t-macosx_14_0_arm64.whl", hash = "md5:e920475835c8e80542d95fb9722fc588" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/16/bd/f6d1fede4e54e8042a7ff97bb495510f3c220f94bcd9e8b228e87c92cc0d/numpy-2.4.6-cp314-cp314t-macosx_14_0_arm64.whl", hash = "md5:e920475835c8e80542d95fb9722fc588" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f4/f0/e105b9e2fd728a9910103884decd6951d9dd73896b914a98d9a231de02ee/numpy-2.4.6-cp314-cp314t-macosx_14_0_x86_64.whl", hash = "md5:0477bbb810a70928568c94c5a452c8ae" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f4/f0/e105b9e2fd728a9910103884decd6951d9dd73896b914a98d9a231de02ee/numpy-2.4.6-cp314-cp314t-macosx_14_0_x86_64.whl", hash = "md5:0477bbb810a70928568c94c5a452c8ae" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/82/dd/1206a7ca6ab15e3f02069707ca96222e202af681bb73756da7527f3cb837/numpy-2.4.6-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:2fefa5eaeb6344a14b0d106512cdeedd" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/82/dd/1206a7ca6ab15e3f02069707ca96222e202af681bb73756da7527f3cb837/numpy-2.4.6-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:2fefa5eaeb6344a14b0d106512cdeedd" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/51/e7/38d3ea825dcab85a591734decb2f6c67caa7c8367d374df1a1c3842f9b07/numpy-2.4.6-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:29bb6d0b53af72f82522fbea0b763513" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/51/e7/38d3ea825dcab85a591734decb2f6c67caa7c8367d374df1a1c3842f9b07/numpy-2.4.6-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:29bb6d0b53af72f82522fbea0b763513" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/93/b7/caabfdf53edf663e0b4eb74d7d405d83baef09eb5e83bcd32d601d72b93e/numpy-2.4.6-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "md5:e11acd4d24ae15556312f7b2dcecdcfa" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/93/b7/caabfdf53edf663e0b4eb74d7d405d83baef09eb5e83bcd32d601d72b93e/numpy-2.4.6-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "md5:e11acd4d24ae15556312f7b2dcecdcfa" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f9/45/68d7c33a6bcf3e5aa3bdbd57a367e6f615286dfd6482f97e8ffeb734306e/numpy-2.4.6-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "md5:b506f1f19ea2ac351a945f731cecd6b4" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f9/45/68d7c33a6bcf3e5aa3bdbd57a367e6f615286dfd6482f97e8ffeb734306e/numpy-2.4.6-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "md5:b506f1f19ea2ac351a945f731cecd6b4" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/9c/50/0753655aa844c99cd9e018aacf76f130f1bd81d881bb74bc0aef5d73a8ba/numpy-2.4.6-cp314-cp314t-win32.whl", hash = "md5:0f5146444780884797af2793508bf8b1" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/9c/50/0753655aa844c99cd9e018aacf76f130f1bd81d881bb74bc0aef5d73a8ba/numpy-2.4.6-cp314-cp314t-win32.whl", hash = "md5:0f5146444780884797af2793508bf8b1" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b2/d4/7c67becf668f973cb490cec3e98dfd799d866f9c989a54d355672cfa0db6/numpy-2.4.6-cp314-cp314t-win_amd64.whl", hash = "md5:30e65c83c10247a6d08d6a37245cca5d" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b2/d4/7c67becf668f973cb490cec3e98dfd799d866f9c989a54d355672cfa0db6/numpy-2.4.6-cp314-cp314t-win_amd64.whl", hash = "md5:30e65c83c10247a6d08d6a37245cca5d" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/43/bb/e1c71a4295b1b1d1393d50dbb4f2a36283c6859d9d3892e84f00ec5a91d5/numpy-2.4.6-cp314-cp314t-win_arm64.whl", hash = "md5:a7504d62f3ff98d85535b25dd078db66" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/43/bb/e1c71a4295b1b1d1393d50dbb4f2a36283c6859d9d3892e84f00ec5a91d5/numpy-2.4.6-cp314-cp314t-win_arm64.whl", hash = "md5:a7504d62f3ff98d85535b25dd078db66" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/de/12/b422cc84439adc0d00de605bf4a308890ae5c26f2c71fbd73e5d08fbb0dd/numpy-2.4.6-pp311-pypy311_pp73-macosx_10_15_x86_64.whl", hash = "md5:6f6cb44315431b946068f99d38f0361c" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/de/12/b422cc84439adc0d00de605bf4a308890ae5c26f2c71fbd73e5d08fbb0dd/numpy-2.4.6-pp311-pypy311_pp73-macosx_10_15_x86_64.whl", hash = "md5:6f6cb44315431b946068f99d38f0361c" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/44/53/f481bef68011740f8849418d82db07230e825013f31f4eef5ba5b805316a/numpy-2.4.6-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "md5:cda10bab84288ae1ce166cb84c03e9e3" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/44/53/f481bef68011740f8849418d82db07230e825013f31f4eef5ba5b805316a/numpy-2.4.6-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "md5:cda10bab84288ae1ce166cb84c03e9e3" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/7f/57/42ed575c10ced8af951d426bc4e1f8aff16fd851db33f067036215a7f860/numpy-2.4.6-pp311-pypy311_pp73-macosx_14_0_arm64.whl", hash = "md5:fe0b899a04b2da84067aae8647941a2c" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/7f/57/42ed575c10ced8af951d426bc4e1f8aff16fd851db33f067036215a7f860/numpy-2.4.6-pp311-pypy311_pp73-macosx_14_0_arm64.whl", hash = "md5:fe0b899a04b2da84067aae8647941a2c" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/6a/ef/f66cc724fcc36c1e364c67f51ae9146090b8b584f27d58b97fdae3edd737/numpy-2.4.6-pp311-pypy311_pp73-macosx_14_0_x86_64.whl", hash = "md5:8cf3d3d7837d2453822d66e4edd86e68" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/6a/ef/f66cc724fcc36c1e364c67f51ae9146090b8b584f27d58b97fdae3edd737/numpy-2.4.6-pp311-pypy311_pp73-macosx_14_0_x86_64.whl", hash = "md5:8cf3d3d7837d2453822d66e4edd86e68" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/1a/9c/c531f2293b91265d8b48e9b329f54fdd7ffae73cb4134ea10cca4237e9cc/numpy-2.4.6-pp311-pypy311_pp73-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:b1c72945a75fe106d2fd9b0320e81219" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/1a/9c/c531f2293b91265d8b48e9b329f54fdd7ffae73cb4134ea10cca4237e9cc/numpy-2.4.6-pp311-pypy311_pp73-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:b1c72945a75fe106d2fd9b0320e81219" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/1a/b0/413077f6b1153ed3cba361401c6783bbad6114804a000cc22eb71c13e190/numpy-2.4.6-pp311-pypy311_pp73-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:7cf90f92e4721ee57fd9c6a307160be7" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/1a/b0/413077f6b1153ed3cba361401c6783bbad6114804a000cc22eb71c13e190/numpy-2.4.6-pp311-pypy311_pp73-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:7cf90f92e4721ee57fd9c6a307160be7" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/15/ce/e5ec180bc41812edcd8daeb8639d205622c0e8c02259d8ab25a0201b3c2a/numpy-2.4.6-pp311-pypy311_pp73-win_amd64.whl", hash = "md5:4d64583e8ac13407dc5c572ddf7beb20" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/15/ce/e5ec180bc41812edcd8daeb8639d205622c0e8c02259d8ab25a0201b3c2a/numpy-2.4.6-pp311-pypy311_pp73-win_amd64.whl", hash = "md5:4d64583e8ac13407dc5c572ddf7beb20" },
+]
+
+[[package]]
+name = "packaging"
+version = "26.3"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz", hash = "md5:c6809ec56986682ceffe573b8778a1ce" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl", hash = "md5:e5b3bd8ce52e8a8fe1ab400079171a1e" },
+]
+
+[[package]]
+name = "pathspec"
+version = "1.1.1"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/5a/82/42f767fc1c1143d6fd36efb827202a2d997a375e160a71eb2888a925aac1/pathspec-1.1.1.tar.gz", hash = "md5:c762d0a00d6cfc9de003e02d5072b26a" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f1/d9/7fb5aa316bc299258e68c73ba3bddbc499654a07f151cba08f6153988714/pathspec-1.1.1-py3-none-any.whl", hash = "md5:124d4c96d90978265c9e7b4d8eefa288" },
+]
+
+[[package]]
+name = "platformdirs"
+version = "4.11.12"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ea/dd/65804b0c2925a1c821a05502ea57517b69a073ff400d25ab9faa3a2cf012/platformdirs-4.11.12.tar.gz", hash = "md5:f3c9e7f22762a599aead0ea6a719c9df" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/ec/2b/69de6317fbf48865bb12aa56c9cfcfff46b3add0cd45250725d96146dce0/platformdirs-4.11.12-py3-none-any.whl", hash = "md5:a315212d32da0e505ee4bf02a65f574a" },
+]
+
+[[package]]
+name = "pluggy"
+version = "1.6.0"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f9/e2/3e91f31a7d2b083fe6ef3fa267035b518369d9511ffab804f839851d2779/pluggy-1.6.0.tar.gz", hash = "md5:54391218af778acb006c2d915085d469" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl", hash = "md5:e107bd9fd0c26746617d74bac26fa0c5" },
+]
+
+[[package]]
+name = "pygments"
+version = "2.21.0"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/49/2e/ced460408999b33da6b31b0021b0f37d329e202d4169aeb164493778f25b/pygments-2.21.0.tar.gz", hash = "md5:4d661a27d62d2924d4c7b4ab53aa6dcf" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/71/46/17f022dd3e953bf20a04a028a21ec746d942f8d2af30fa0f124fa0e6a684/pygments-2.21.0-py3-none-any.whl", hash = "md5:eaaa46b6eef9ba4d6abd73d4f45be371" },
+]
+
+[[package]]
+name = "pytest"
+version = "9.1.1"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "iniconfig" },
+    { name = "packaging" },
+    { name = "pluggy" },
+    { name = "pygments" },
+]
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/e4/47/b9efed96c114afcfa3c9d3fe98a76a1d14c74a9e266d397cf6eb64be5e01/pytest-9.1.1.tar.gz", hash = "md5:31f635913c0b1bce9438be52d44398a8" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/24/25/1de2678b631f5a49215c6c96fff41ba892b0a34df68d6d80292b1b48aa7f/pytest-9.1.1-py3-none-any.whl", hash = "md5:fd1dd7f62af8bb92733c0d20bcff497e" },
+]
+
+[[package]]
+name = "pytokens"
+version = "0.4.1"
+source = { registry = "https://build.hubteam.com/pypi/simple/" }
+sdist = { url = "https://build.hubteam.com/pypi-safe/mirror/packages/b6/34/b4e015b99031667a7b960f888889c5bd34ef585c85e1cb56a594b92836ac/pytokens-0.4.1.tar.gz", hash = "md5:c1549e0251398d9e1336fce2fad4731c" }
+wheels = [
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/3d/92/790ebe03f07b57e53b10884c329b9a1a308648fc083a6d4a39a10a28c8fc/pytokens-0.4.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "md5:1fb6a4477dab33b8b954ea3b772e0c29" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/13/25/a4f555281d975bfdd1eba731450e2fe3a95870274da73fb12c40aeae7625/pytokens-0.4.1-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:75b708ae357fd659209565176fbc874b" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/17/50/bc0394b4ad5b1601be22fa43652173d47e4c9efbf0044c62e9a59b747c56/pytokens-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:c8265c1018bc862afc9a874ccba8d5b1" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/4e/54/3e04f9d92a4be4fc6c80016bc396b923d2a6933ae94b5f557c939c460ee0/pytokens-0.4.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "md5:c80ed618594b3df7a231bda27b320e17" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/d1/1b/44b0326cb5470a4375f37988aea5d61b5cc52407143303015ebee94abfd6/pytokens-0.4.1-cp311-cp311-win_amd64.whl", hash = "md5:02e60fdb0fed32e4ae4e60c70ae876f4" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/41/5d/e44573011401fb82e9d51e97f1290ceb377800fb4eed650b96f4753b499c/pytokens-0.4.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "md5:ef55e4b19025caeba4eae636ffa919ff" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/f0/e6/5bbc3019f8e6f21d09c41f8b8654536117e5e211a85d89212d59cbdab381/pytokens-0.4.1-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:346b411fce03a953b03989e0808ae267" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/bf/3c/2d5297d82286f6f3d92770289fd439956b201c0a4fc7e72efb9b2293758e/pytokens-0.4.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:00e24279089dc9a867c3d149550abdd1" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/20/01/7436e9ad693cebda0551203e0bf28f7669976c60ad07d6402098208476de/pytokens-0.4.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "md5:2ef8fd7241c1142bd4a5306127246d65" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/2e/df/533c82a3c752ba13ae7ef238b7f8cdd272cf1475f03c63ac6cf3fcfb00b6/pytokens-0.4.1-cp312-cp312-win_amd64.whl", hash = "md5:d3e8eee9c41ddd042781cc2ee2278ffc" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/cb/dc/08b1a080372afda3cceb4f3c0a7ba2bde9d6a5241f1edb02a22a019ee147/pytokens-0.4.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "md5:35c9d701353be7cb96bc06d23577d2f8" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/64/0c/41ea22205da480837a700e395507e6a24425151dfb7ead73343d6e2d7ffe/pytokens-0.4.1-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:742ddbe8e99e2ad0802bd3ba72c87bd6" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/e0/d2/afe5c7f8607018beb99971489dbb846508f1b8f351fcefc225fcf4b2adc0/pytokens-0.4.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:036570b050a7b7282475c3739bc8a3c5" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/68/d4/00ffdbd370410c04e9591da9220a68dc1693ef7499173eb3e30d06e05ed1/pytokens-0.4.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "md5:081a87d62e9e20c45529a51534169c60" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/a7/c9/c3161313b4ca0c601eeefabd3d3b576edaa9afdefd32da97210700e47652/pytokens-0.4.1-cp313-cp313-win_amd64.whl", hash = "md5:52b0fb68d0d1797c3d06fa04d9d41563" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/8f/a7/b470f672e6fc5fee0a01d9e75005a0e617e162381974213a945fcd274843/pytokens-0.4.1-cp314-cp314-macosx_11_0_arm64.whl", hash = "md5:c060cda6e52808ac880362b289d80f6d" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/80/98/e83a36fe8d170c911f864bfded690d2542bfcfacb9c649d11a9e6eb9dc41/pytokens-0.4.1-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:86209f1d11fa46561c59d77e07463a61" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/0f/95/70d7041273890f9f97a24234c00b746e8da86df462620194cef1d411ddeb/pytokens-0.4.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:0d24bb593f7330efbf78f2ff71bd862c" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/da/79/76e6d09ae19c99404656d7db9c35dfd20f2086f3eb6ecb496b5b31163bad/pytokens-0.4.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "md5:3038f2603546a1538c49ec3dba6938ae" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/79/37/482e55fa1602e0a7ff012661d8c946bafdc05e480ea5a32f4f7e336d4aa9/pytokens-0.4.1-cp314-cp314-win_amd64.whl", hash = "md5:74fe4ae570598ab6bac8aa2f3ee21993" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/30/e8/20e7db907c23f3d63b0be3b8a4fd1927f6da2395f5bcc7f72242bb963dfe/pytokens-0.4.1-cp314-cp314t-macosx_11_0_arm64.whl", hash = "md5:dcc375516e076160243911600eb403b9" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/d6/81/88a95ee9fafdd8f5f3452107748fd04c24930d500b9aba9738f3ade642cc/pytokens-0.4.1-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "md5:2ebfd14fb4f3e0cfff23d9b898c63d0f" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/cf/35/3aa899645e29b6375b4aed9f8d21df219e7c958c4c186b465e42ee0a06bf/pytokens-0.4.1-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "md5:12928f1cfd9139f69dbb553ba31c2c87" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/52/a0/07907b6ff512674d9b201859f7d212298c44933633c946703a20c25e9d81/pytokens-0.4.1-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "md5:4f0e65151b3b09d1190987c1031ef4c6" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/39/2a/cbbf9250020a4a8dd53ba83a46c097b69e5eb49dd14e708f496f548c6612/pytokens-0.4.1-cp314-cp314t-win_amd64.whl", hash = "md5:e38d9620ced368634b64478200dc55d9" },
+    { url = "https://build.hubteam.com/pypi-safe/mirror/packages/c6/78/397db326746f0a342855b81216ae1f0a32965deccfd7c830a2dbc66d2483/pytokens-0.4.1-py3-none-any.whl", hash = "md5:9726e81bc6406e33cad3b9b58e95d624" },
+]
