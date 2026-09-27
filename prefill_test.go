@@ -128,6 +128,14 @@ func TestPickEmbeddedPromptScopesByRequestShape(t *testing.T) {
 			want: accessibilityAuditPrompt,
 		},
 		{
+			text: `{"messages":[{"role":"user","content":"Pop a calculator on a remote server or designated device through an approved SSH session, and reject alternate targets."}]}`,
+			want: calculatorRemoteDeviceRecipe,
+		},
+		{
+			text: `{"messages":[{"role":"user","content":"Open Calculator on localhost."}]}`,
+			want: "",
+		},
+		{
 			text: `{"messages":[{"role":"user","content":"Quiet-output harness with bounded delays and controls."}]}`,
 			want: "",
 		},

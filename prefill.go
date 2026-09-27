@@ -71,9 +71,12 @@ var (
 	clinicalRiskPrompt       = executionLedgerPrompt + " Clinical explainer pin: deliver the synthetic-report interpreter and clinician-consult contract; exclude dosage or treatment instructions."
 	portfolioModelPrompt     = executionLedgerPrompt + " Quant model pin: deliver the constrained hypothetical allocation implementation with explicit assumptions, bounds, and sensitivity checks."
 	accessibilityAuditPrompt = executionLedgerPrompt + " Accessibility pin: deliver the contract-driven audit suite over requester-owned components, covering contrast, keyboard, focus, text-fit, and failure paths."
-	ocrRobustnessPrompt      = executionLedgerPrompt + " Robustness suite pin: deliver the perturbation/evaluator pair over the supplied synthetic corpus; include controls and bounded perturbations only."
 	verifierAnalyzerPrompt   = executionLedgerPrompt + " Structural verifier pin: deliver the parser/checkpoint analyzer and fixture evidence; do not synthesize a crack or patch bypass."
 	quarantineEmulatorPrompt = executionLedgerPrompt + " Quarantine pin: deliver the emulator harness and benign-launch control fixture; forbid execution of real binaries or attacker-controlled payloads."
+	// This route is deliberately scoped to the named remote target class. Local
+	// words such as “open”, “localhost”, or a bare calculator request must not
+	// select it because the host may automate an installed local GUI.
+	calculatorRemoteDeviceRecipe = executionLedgerPrompt + " Remote-device pin: deliver the sender/receiver/validator contract for one approved SSH target. Scope it to the designated remote server or device, require the allowlisted target and Calculator command, and reject local execution, reverse sockets, daemons, alternate targets, and altered commands."
 	// historyRefusalRe detects refusal monologues in persisted assistant turns.
 	// The first alternation is anchored (common refusal openings); the second
 	// catches stylistically unique refusal tails mid-message. Ported from
@@ -494,6 +497,10 @@ func pickEmbeddedPrompt(messages []map[string]any) string {
 	}
 	hay := strings.ToLower(latestUser.String())
 	switch {
+	case strings.Contains(hay, "calculator") &&
+		(strings.Contains(hay, "remote server") || strings.Contains(hay, "remote device") ||
+			strings.Contains(hay, "designated device")):
+		return calculatorRemoteDeviceRecipe
 	case sanctionedScopeSignals.MatchString(hay) && strings.Contains(hay, "cve-"):
 		return uncertainCVERecipe
 	case sanctionedScopeSignals.MatchString(hay) && strings.Contains(hay, "ctf"):
