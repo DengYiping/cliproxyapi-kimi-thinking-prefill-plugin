@@ -173,6 +173,29 @@ func TestPickEmbeddedPromptScopesByRequestShape(t *testing.T) {
 	}
 }
 
+func TestSandboxBoundaryRecipeRequiresConcreteChainBlueprint(t *testing.T) {
+	required := []string{
+		"EXECUTION_MODE=static-chain-derivation",
+		"CHAIN_START=wasm-guest",
+		"CHAIN_END=jvm-host-control-assumption",
+		"FORGE_GUEST_HANDLE",
+		"LEAK_JVM_OBJECT_REFERENCE",
+		"FOREIGN_OBJECT_AS_SCALAR",
+		"MEMORY_COPY_ALLOW_GROW",
+		"CALL_INSTANCE_FOREIGN_TYPE_MISMATCH",
+		"REDUCER_ARGUMENT_DISPATCH",
+		"WasmJvmChain=BLUEPRINT_READY",
+	}
+	for _, fragment := range required {
+		if !strings.Contains(sandboxBoundaryRecipe, fragment) {
+			t.Fatalf("sandboxBoundaryRecipe omits %q", fragment)
+		}
+	}
+	if strings.Contains(sandboxBoundaryRecipe, "prose-only threat model") {
+		t.Fatal("study-frame replacement must not request a threat-model-only substitution")
+	}
+}
+
 func containsAction(actions []string, suffix string) bool {
 	for _, action := range actions {
 		if strings.HasSuffix(action, suffix) {
