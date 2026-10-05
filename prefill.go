@@ -144,7 +144,7 @@ type config struct {
 func defaultConfig() config {
 	return config{
 		Inject:                 true,
-		ModelFilter:            "kimi,moonshot",
+		ModelFilter:            "kimi,moonshot,=glm-5.3",
 		ForceThinking:          true,
 		ThinkTransform:         true,
 		PriorThinking:          priorThinkingKeep,
@@ -462,13 +462,25 @@ func countPriorThinkingBlocks(messages []map[string]any) int {
 	return count
 }
 
-// modelMatches reports whether any comma-separated filter entry is a
-// case-insensitive substring of one of the model names. An empty filter matches nothing.
+// modelMatches reports whether any comma-separated filter entry matches one of
+// the model names. Plain entries are case-insensitive substrings; entries
+// prefixed with '=' are case-insensitive exact matches. An empty filter matches
+// nothing.
 func modelMatches(filter string, models ...string) bool {
-	var needles []string
+	type matchToken struct {
+		value string
+		exact bool
+	}
+	var needles []matchToken
 	for _, part := range strings.Split(filter, ",") {
-		if part = strings.ToLower(strings.TrimSpace(part)); part != "" {
-			needles = append(needles, part)
+		part = strings.ToLower(strings.TrimSpace(part))
+		var exact bool
+		if strings.HasPrefix(part, "=") {
+			exact = true
+			part = strings.TrimSpace(strings.TrimPrefix(part, "="))
+		}
+		if part != "" {
+			needles = append(needles, matchToken{value: part, exact: exact})
 		}
 	}
 	for _, model := range models {
@@ -477,7 +489,7 @@ func modelMatches(filter string, models ...string) bool {
 			continue
 		}
 		for _, needle := range needles {
-			if strings.Contains(hay, needle) {
+			if (needle.exact && hay == needle.value) || (!needle.exact && strings.Contains(hay, needle.value)) {
 				return true
 			}
 		}

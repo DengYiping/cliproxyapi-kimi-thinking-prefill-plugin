@@ -67,7 +67,7 @@ All keys live under `plugins.configs.kimi-thinking-prefill`. `enabled` and `prio
 |---|---|---|---|
 | `inject` | `true` | `enabled` | Master switch for injection and the trailing `<think>` transform. |
 | `reasoning_prefill` | `""` | `reasoning_prefill` | Seed placed in `reasoning_content`; use `|` to rotate alternatives. An empty seed disables injection unless a per-request override provides one. |
-| `model_filter` | `kimi,moonshot` | `model_filter` | Comma-separated, case-insensitive substrings. Matched against the upstream model and the payload's `model`. An empty filter matches nothing. |
+| `model_filter` | `kimi,moonshot,=glm-5.3` | `model_filter` | Comma-separated, case-insensitive substrings; prefix a token with `=` for an exact match. Matched against the upstream model and the payload's `model`. An empty filter matches nothing. |
 | `force_thinking` | `true` | `force_thinking` | On modified requests, removes `reasoning_effort: none`, `chat_template_kwargs.thinking: false`, and `thinking.type: disabled` (set to `enabled`), then sets `include_reasoning: true`. |
 | `think_transform` | `true` | (always on) | Converts a trailing assistant `<think>…` prefill into `reasoning_content` + `partial`. |
 | `prior_thinking` | `keep` | `send_all_thinking` | Earlier assistant turns: `keep` as sent, `strip` reasoning (saves input tokens), or `extract` leading `<think>…</think>` into `reasoning_content`. |

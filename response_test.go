@@ -68,6 +68,21 @@ func TestResponseHookRegistrationAndRPC(t *testing.T) {
 	}
 }
 
+func TestResponseRestoresPrefillForGLM(t *testing.T) {
+	cfg := mustConfig(t, "")
+	req := responseRequest("Let me think")
+	req.Model = "glm-5.3"
+	req.TranslatedRequest = []byte(`{"model":"glm-5.3","messages":[` +
+		`{"role":"user","content":"hi"},` +
+		`{"role":"assistant","content":"","reasoning_content":"Let me think","partial":true}]}`)
+	req.Body = []byte(`{"choices":[{"message":{"role":"assistant","content":"answer","reasoning_content":" then answer."}}]}`)
+
+	got := (&responseRepairer{}).repair(cfg, req)
+	if reasoning := gjson.GetBytes(got, "choices.0.message.reasoning_content").String(); reasoning != "Let me think then answer." {
+		t.Fatalf("GLM seed and generated reasoning should be returned together: %s", got)
+	}
+}
+
 func TestResponseAfterHookRewritesTrialRefusal(t *testing.T) {
 	registration := pluginRegistration()
 	if !registration.Capabilities.ResponseAfterTranslator {

@@ -17,8 +17,9 @@ plugins:
       # To rotate per thinking block, separate seeds with |, e.g.:
       # reasoning_prefill: "First thought | Second thought | Third thought"
       # Comma-separated, case-insensitive substrings matched against the upstream
-      # model name and the model field in the payload.
-      model_filter: "kimi,moonshot"
+      # model name and the model field in the payload. Prefix a token with '='
+      # for an exact match.
+      model_filter: "kimi,moonshot,=glm-5.3"
       # Remove reasoning_effort=none, chat_template_kwargs.thinking=false and
       # thinking.type=disabled, and set include_reasoning=true on modified requests.
       force_thinking: true

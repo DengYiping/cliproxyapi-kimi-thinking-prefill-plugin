@@ -68,7 +68,7 @@ import (
 
 const (
 	pluginName    = "kimi-thinking-prefill"
-	pluginVersion = "0.7.1"
+	pluginVersion = "0.7.2"
 )
 
 // githubRepository is required non-empty by the host; override with
@@ -237,7 +237,7 @@ func pluginRegistration() registration {
 			ConfigFields: []pluginapi.ConfigField{
 				{Name: "inject", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Inject the reasoning prefill and transform trailing <think> prefills."},
 				{Name: "reasoning_prefill", Type: pluginapi.ConfigFieldTypeString, Description: "Seed text for reasoning_content; separate rotating alternatives with |."},
-				{Name: "model_filter", Type: pluginapi.ConfigFieldTypeString, Description: "Comma-separated, case-insensitive model substrings to act on."},
+				{Name: "model_filter", Type: pluginapi.ConfigFieldTypeString, Description: "Comma-separated, case-insensitive model substrings to act on; prefix a token with '=' for an exact match."},
 				{Name: "force_thinking", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Remove thinking-disabling params and set include_reasoning on modified requests."},
 				{Name: "think_transform", Type: pluginapi.ConfigFieldTypeBoolean, Description: "Convert a trailing assistant <think> prefill into reasoning_content with partial=true; | alternatives rotate."},
 				{Name: "prior_thinking", Type: pluginapi.ConfigFieldTypeEnum, EnumValues: []string{priorThinkingKeep, priorThinkingStrip, priorThinkingExtract}, Description: "Reasoning on earlier assistant turns: keep as sent, strip it, or extract <think> blocks into reasoning_content."},

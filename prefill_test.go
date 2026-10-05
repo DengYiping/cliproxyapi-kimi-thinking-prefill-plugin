@@ -49,6 +49,23 @@ func TestInjectsPrefillAfterUserTurn(t *testing.T) {
 	}
 }
 
+func TestInjectsPrefillForGLM(t *testing.T) {
+	cfg := mustConfig(t, "reasoning_prefill: I should continue from the GLM seed.")
+	body := []byte(`{"model":"glm-5.3","messages":[{"role":"user","content":"hi"}]}`)
+
+	got := transform(cfg, "openai", "glm-5.3", body)
+	last := lastMessage(t, got.Body)
+
+	if last.Get("role").String() != "assistant" ||
+		last.Get("reasoning_content").String() != "I should continue from the GLM seed." ||
+		!last.Get("partial").Bool() {
+		t.Fatalf("unexpected GLM injected message: %s", last.Raw)
+	}
+	if !gjson.GetBytes(got.Body, "include_reasoning").Bool() {
+		t.Fatal("force_thinking should set include_reasoning for GLM")
+	}
+}
+
 func TestDefaultsToExecutionLedger(t *testing.T) {
 	cfg := mustConfig(t, "")
 	body := []byte(`{"model":"kimi-k3","messages":[{"role":"user","content":"hi"}]}`)
@@ -214,6 +231,11 @@ func TestModelFilter(t *testing.T) {
 		{"kimi,moonshot", []string{"Kimi-K3"}, true},
 		{"kimi, moonshot", []string{"moonshotai/kimi-k3"}, true},
 		{"kimi", []string{"claude-sonnet-4-6", "kimi-k3"}, true},
+		{"kimi,moonshot,=glm-5.3", []string{"glm-5.3"}, true},
+		{"kimi,moonshot,=glm-5.3", []string{"GLM-5.3"}, true},
+		{"kimi,moonshot,=glm-5.3", []string{"glm-5.3-cyber"}, false},
+		{"kimi,moonshot,=glm-5.3", []string{"GLM-5.3-UNCENSORED-NVFP4"}, false},
+		{"kimi,moonshot, = glm-5.3", []string{"glm-5.3"}, true},
 		{"kimi", []string{"glm-5"}, false},
 		{"", []string{"kimi-k3"}, false},
 		{" , ", []string{"kimi-k3"}, false},
