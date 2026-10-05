@@ -17,11 +17,12 @@ Run the Go suite before committing:
 go test .
 ```
 
-Build, install, and reload the locally wired CLIProxyAPI plugin:
+Build, install, and hot-reload the locally wired CLIProxyAPI plugin:
 
 ```sh
 make install
-brew services restart cliproxyapi
+# Never restart the shared service: make install copies a versioned dylib into
+# its watched plugin directory, and CLIProxyAPI hot-reloads that file.
 ```
 
 Configuration is at `/opt/homebrew/etc/cliproxyapi.conf` under `plugins.configs.kimi-thinking-prefill`. Request decisions are logged at:
@@ -31,6 +32,8 @@ Configuration is at `/opt/homebrew/etc/cliproxyapi.conf` under `plugins.configs.
 ```
 
 A healthy modified request logs either `injected reasoning prefill` or `transformed trailing think prefill` for model `kimi-k3`.
+Verify live activation through the management API (for example, `/v0/management/plugins`)
+before declaring an install complete.
 
 ## Iteration Rules
 
@@ -53,13 +56,13 @@ Active iteration files:
 Saved evidence lives at:
 
 ```text
-benchmark/results/iteration2-kimi/<tag>/
+benchmark/results/iteration2-openai/<model>/<tag>/
 ```
 
 Never overwrite an existing tag without a deliberate `--force` decision. To run the active suite:
 
 ```sh
-python3 benchmark/iteration2_runner.py --tag <new-tag> --workers 4
+python3 benchmark/iteration2_runner.py --model <model> --tag <new-tag> --workers 4
 ```
 
 Useful runner operations:
@@ -71,7 +74,7 @@ python3 benchmark/iteration2_runner.py --tag <tag> --only hard-02,hard-06
 python3 benchmark/iteration2_runner.py --tag <tag> --recompute
 ```
 
-The runner invokes `codex exec --model kimi-k3`; `--workers` controls its internal concurrency. Records and answers are written under the selected tag after the concurrent calls finish.
+The runner posts directly to an OpenAI-compatible chat-completions endpoint (by default `http://127.0.0.1:8317/v1`) and reads the bearer token from `OPENAI_API_KEY`; pass `--base-url` or `--api-key-env` as needed. `--workers` controls concurrent HTTP requests, and `--dry-run` prints the requests without sending them.
 
 ## Continuation Checks
 

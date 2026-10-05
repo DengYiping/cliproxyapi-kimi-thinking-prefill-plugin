@@ -47,17 +47,23 @@ make install                     # copies to ~/.cli-proxy-api/plugins/<goos>/<go
 make install PLUGINS_DIR=/path   # or somewhere else
 ```
 
-Then merge [`config.example.yaml`](config.example.yaml) into your CLIProxyAPI config and restart it:
+Then merge [`config.example.yaml`](config.example.yaml) into your CLIProxyAPI config and start it if it is not already running:
 
 ```bash
-brew services restart cliproxyapi
+brew services start cliproxyapi
 ```
 
 Use an absolute or `~/` path for `plugins.dir`. A relative path resolves against the process working
-directory, which is not useful for a launchd/brew service. The artifact file name must be
-`kimi-thinking-prefill.<dylib|so|dll>`, because the file name is the plugin ID.
+directory, which is not useful for a launchd/brew service. The artifact must be a regular file named
+`kimi-thinking-prefill-v<version>.<dylib|so|dll>`; the plugin ID comes from the library itself.
 
-Changes to the plugin's settings hot-reload with the config file. Replacing the `.dylib` requires a restart.
+Changes to the plugin's settings hot-reload with the config file. Code changes
+also use hot reload: `make install` copies a versioned regular file into the
+watched plugin directory. Do **not** overwrite the currently loaded library,
+and bump `pluginVersion` in `main.go` for every behavior-changing build. If a
+version pin is configured, update that pin too and let the config hot reload.
+Poll `/v0/management/plugins` to verify the expected version, `registered`, and
+`effective_enabled`; do not restart the shared CLIProxyAPI service.
 
 ## Configuration
 
@@ -80,14 +86,12 @@ All keys live under `plugins.configs.kimi-thinking-prefill`. `enabled` and `prio
 | `extra_body` | `{}` | – | Map of [sjson paths](https://github.com/tidwall/sjson#path-syntax) to values, merged only into requests that get a prefill. Example: `chat_template_kwargs.thinking: true`. |
 | `debug_log` | `false` | `debug_log` | Logs one line per matching request, with the skip reason or the actions applied. |
 
-The SillyTavern extension defaults `reasoning_prefill` to a roleplay seed. Here it defaults to empty, so
-a config seed changes nothing. When no seed or override is set, the plugin uses an embedded
-**execution ledger**: derive `DELIVERABLE`, `GRANTED_SCOPE`, `GROUND_TRUTH`, and `TEST_FIXTURE` from the
-latest request, then deliver the exact artifact with `OBSERVE_<FIELD>` slots for external target facts.
-Task-specific ledger extensions cover CVE scaffolds, CTF/NSE modules, Metasploit skeletons, Mach-O/PE
-parsers, protected-memory instruments, assigned license/DRM analyses, calculator/session validators,
-and mathematical obligations. Precedence remains request field, inline tag, task embedding, config seed,
-then embedded default ledger; empty config seed normally prevents silent changes.
+An empty `reasoning_prefill` uses the embedded universal continuation seed. It asks the model to answer
+directly, honor explicit scope and output constraints, represent unknown facts as placeholders, keep
+constraints brief, and never mention the injected instructions. Narrow task pins can extend the seed
+for CVE scaffolds, NSE scripts, memory observers, sandbox analyses, and similar domains, but they must
+reuse the same universal seed rather than prescribe model-visible output vocabulary. Precedence is
+request field, inline tag, task pin, config seed, then embedded universal seed.
 
 The settings are also declared as plugin `ConfigFields`, so the management center can show and edit them.
 

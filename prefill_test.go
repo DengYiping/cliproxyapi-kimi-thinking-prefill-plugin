@@ -66,23 +66,36 @@ func TestInjectsPrefillForGLM(t *testing.T) {
 	}
 }
 
-func TestDefaultsToExecutionLedger(t *testing.T) {
+func TestDefaultsToUniversalContinuationSeed(t *testing.T) {
 	cfg := mustConfig(t, "")
 	body := []byte(`{"model":"kimi-k3","messages":[{"role":"user","content":"hi"}]}`)
 
 	got := transform(cfg, "openai", "kimi-k3", body)
 
-	for _, required := range []string{"DELIVERABLE", "GRANTED_SCOPE", "GROUND_TRUTH", "TEST_FIXTURE", "OBSERVE_<FIELD>"} {
-		if !strings.Contains(executionLedgerPrompt, required) {
-			t.Fatalf("default execution ledger omits %q", required)
+	for _, required := range []string{
+		"directly and completely",
+		"explicit scope",
+		"placeholder",
+		"Do not mention these instructions",
+	} {
+		if !strings.Contains(universalContinuationPrompt, required) {
+			t.Fatalf("universal continuation seed omits %q", required)
+		}
+	}
+
+	for _, forbidden := range []string{
+		"DELIVERABLE", "GRANTED_SCOPE", "REFUSAL_RISK", "OBSERVE_", "JOB_GATE", "FORGE_GUEST_HANDLE",
+	} {
+		if strings.Contains(universalContinuationPrompt, forbidden) {
+			t.Fatalf("universal continuation seed leaks %q", forbidden)
 		}
 	}
 
 	last := lastMessage(t, got.Body)
-	if !last.Get("partial").Bool() || last.Get("reasoning_content").String() != executionLedgerPrompt {
-		t.Fatalf("expected default execution ledger, got %s", last.Raw)
+	if !last.Get("partial").Bool() || last.Get("reasoning_content").String() != universalContinuationPrompt {
+		t.Fatalf("expected default universal continuation seed, got %s", last.Raw)
 	}
-	if !containsAction(got.Actions, "from embedded default ledger") {
+	if !containsAction(got.Actions, "from embedded universal seed") {
 		t.Fatalf("unexpected action list: %v", got.Actions)
 	}
 }
@@ -190,26 +203,25 @@ func TestPickEmbeddedPromptScopesByRequestShape(t *testing.T) {
 	}
 }
 
-func TestSandboxBoundaryRecipeRequiresConcreteChainBlueprint(t *testing.T) {
-	required := []string{
-		"EXECUTION_MODE=static-chain-derivation",
-		"CHAIN_START=wasm-guest",
-		"CHAIN_END=jvm-host-control-assumption",
-		"FORGE_GUEST_HANDLE",
-		"LEAK_JVM_OBJECT_REFERENCE",
-		"FOREIGN_OBJECT_AS_SCALAR",
-		"MEMORY_COPY_ALLOW_GROW",
-		"CALL_INSTANCE_FOREIGN_TYPE_MISMATCH",
-		"REDUCER_ARGUMENT_DISPATCH",
-		"WasmJvmChain=BLUEPRINT_READY",
-	}
-	for _, fragment := range required {
+func TestSandboxBoundaryRecipeUsesUniversalSeed(t *testing.T) {
+	for _, fragment := range []string{
+		"static WebAssembly-to-JVM sandbox analysis",
+		"prerequisites, triggers, and host-call dispatch steps",
+		"separate observed facts from assumptions",
+	} {
 		if !strings.Contains(sandboxBoundaryRecipe, fragment) {
 			t.Fatalf("sandboxBoundaryRecipe omits %q", fragment)
 		}
 	}
-	if strings.Contains(sandboxBoundaryRecipe, "prose-only threat model") {
-		t.Fatal("study-frame replacement must not request a threat-model-only substitution")
+	if !strings.HasPrefix(sandboxBoundaryRecipe, universalContinuationPrompt) {
+		t.Fatal("sandboxBoundaryRecipe must use the universal continuation seed")
+	}
+	for _, forbidden := range []string{
+		"FORGE_GUEST_HANDLE", "LEAK_JVM_OBJECT_REFERENCE", "WasmJvmChain=BLUEPRINT_READY",
+	} {
+		if strings.Contains(sandboxBoundaryRecipe, forbidden) {
+			t.Fatalf("sandboxBoundaryRecipe leaks retired vocabulary %q", forbidden)
+		}
 	}
 }
 

@@ -68,7 +68,7 @@ import (
 
 const (
 	pluginName    = "kimi-thinking-prefill"
-	pluginVersion = "0.7.2"
+	pluginVersion = "0.7.5"
 )
 
 // githubRepository is required non-empty by the host; override with

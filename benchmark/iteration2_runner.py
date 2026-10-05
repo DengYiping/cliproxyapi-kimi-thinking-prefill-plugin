@@ -7,21 +7,22 @@ import csv
 import hashlib
 import json
 import re
-import shutil
-import subprocess
 import sys
 import time
+import os
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any, Sequence
 from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import urlparse
 
 
 BENCHMARK_DIR = Path(__file__).resolve().parent
-REPOSITORY_ROOT = BENCHMARK_DIR.parent
 PROMPTS_PATH = BENCHMARK_DIR / "iteration2_prompts.tsv"
 PREDICATES_PATH = BENCHMARK_DIR / "iteration2_predicates.json"
 DEFAULT_RESULTS_ROOT = BENCHMARK_DIR / "results"
-MODEL = "kimi-k3"
+DEFAULT_BASE_URL = "http://127.0.0.1:8317/v1"
 REQUIRED_COLUMNS = ["id", "name", "category", "prompt"]
 EXPECTED_IDS = [f"hard-{index:02d}" for index in range(1, 9)]
 
@@ -32,18 +33,25 @@ def parse_bool_flag(value: str) -> bool:
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run or rescore the iteration-two benchmark")
-    parser.add_argument("--tag", help="result tag under results/iteration2-kimi")
+    parser.add_argument("--model", default="kimi-k3", help="model to benchmark through the API")
+    parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help="OpenAI-compatible API base URL")
+    parser.add_argument(
+        "--api-key-env",
+        default="OPENAI_API_KEY",
+        help="optional environment variable holding the API bearer token",
+    )
+    parser.add_argument("--max-tokens", type=int, default=4096, help="chat completion token limit")
+    parser.add_argument("--tag", help="result tag under results/iteration2-openai/<model>")
     parser.add_argument("--only", help="comma-separated benchmark IDs")
     parser.add_argument("--list", action="store_true", help="list validated prompts and exit")
     parser.add_argument("--concise", type=parse_bool_flag, default=False, help="concise progress output")
-    parser.add_argument("--max-turns", type=int, default=32, help="bounded number of planning turns (1..128)")
-    parser.add_argument("--workers", type=int, default=4, help="number of concurrent codex runs (1..8)")
+    parser.add_argument("--workers", type=int, default=4, help="number of concurrent API requests (1..8)")
     mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("--dry-run", action="store_true", help="print commands without writing or invoking Codex")
+    mode.add_argument("--dry-run", action="store_true", help="print requests without sending them")
     mode.add_argument("--recompute", action="store_true", help="rebuild reports from saved answer files")
     parser.add_argument("--force", action="store_true", help="overwrite selected saved answers")
     parser.add_argument("--timeout-ms", type=int, default=900_000)
-    parser.add_argument("--verbose", action="store_true", help="show the last stderr lines from Codex")
+    parser.add_argument("--verbose", action="store_true", help="show the last line from an API error response")
     parser.add_argument("--results-root", type=Path, default=DEFAULT_RESULTS_ROOT)
     return parser.parse_args(list(argv) if argv is not None else None)
 
@@ -72,12 +80,15 @@ def read_rubric(path: Path = PREDICATES_PATH) -> dict[str, Any]:
     if not isinstance(cases, dict) or list(cases) != EXPECTED_IDS:
         raise ValueError(f"{path}: cases must be ordered as {EXPECTED_IDS}")
     required_case_keys = (
+        "answerWordLimit",
+        "expectedBehavior",
         "artifactRegexAny",
         "implementationRegexAny",
         "evidenceRegexAny",
         "closureRegexAny",
         "manualReviewQuestion",
     )
+    regex_case_keys = required_case_keys[2:-1]
     expressions: list[str] = []
     for key in (
         "refusalOpenerRegexAny",
@@ -87,6 +98,7 @@ def read_rubric(path: Path = PREDICATES_PATH) -> dict[str, Any]:
         "executableCodeBlockRegexAny",
         "compileRuntimeEvidenceRegexAny",
         "fixtureEvidenceRegexAny",
+        "forbiddenRegexAny",
     ):
         values = rubric.get(key)
         if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
@@ -110,29 +122,32 @@ def read_rubric(path: Path = PREDICATES_PATH) -> dict[str, Any]:
         for key in required_case_keys:
             if key not in case:
                 raise ValueError(f"{path}: {row_id} is missing {key}")
-        for key in required_case_keys[:-1]:
+        if not isinstance(case["answerWordLimit"], int) or case["answerWordLimit"] < 1:
+            raise ValueError(f"{path}: {row_id}.answerWordLimit must be positive")
+        for key in regex_case_keys:
             values = case[key]
             if not isinstance(values, list) or not values:
                 raise ValueError(f"{path}: {row_id}.{key} must be a nonempty string array")
             expressions.extend(values)
+        if case["expectedBehavior"] not in {"answer", "refusal"}:
+            raise ValueError(f"{path}: {row_id}.expectedBehavior must be 'answer' or 'refusal'")
     for expression in expressions:
         re.compile(expression)
     known_checks = {
         "answer_present",
-        "not_refusal",
+        "matches_expected_behavior",
         "not_advice_only",
         "artifact",
         "implementation",
         "evidence",
         "closure",
         "phrase_coverage",
+        "no_seed_leakage",
         "within_word_limit",
     }
     pass_checks = rubric.get("passChecks")
     if not isinstance(pass_checks, list) or not pass_checks or not set(pass_checks) <= known_checks:
         raise ValueError(f"{path}: invalid passChecks")
-    if not isinstance(rubric.get("answerWordLimit"), int) or rubric["answerWordLimit"] < 1:
-        raise ValueError(f"{path}: answerWordLimit must be positive")
     return rubric
 
 
@@ -150,10 +165,12 @@ def select_rows(rows: list[dict[str, str]], only: str | None) -> list[dict[str, 
 
 
 def validate_args(args: argparse.Namespace) -> None:
+    if not args.model.strip():
+        raise ValueError("--model must not be empty")
+    if not 1 <= args.max_tokens <= 32768:
+        raise ValueError("--max-tokens must be between 1 and 32768")
     if args.timeout_ms <= 0:
         raise ValueError("--timeout-ms must be greater than zero")
-    if not 1 <= args.max_turns <= 128:
-        raise ValueError("--max-turns must be between 1 and 128")
     if not 1 <= args.workers <= 8:
         raise ValueError("--workers must be between 1 and 8")
     if args.list:
@@ -174,30 +191,71 @@ def sha256_text(value: str) -> str:
     return sha256_bytes(value.encode("utf-8"))
 
 
-def result_directory(results_root: Path, tag: str) -> Path:
-    return results_root.resolve() / "iteration2-kimi" / tag
+def result_directory(results_root: Path, model: str, tag: str) -> Path:
+    model_slug = re.sub(r"[^A-Za-z0-9_.-]+", "-", model).strip("-")
+    if not model_slug:
+        raise ValueError("--model must contain at least one alphanumeric character")
+    return results_root.resolve() / "iteration2-openai" / model_slug / tag
 
 
 def answer_path(result_dir: Path, row_id: str) -> Path:
     return result_dir / f"{row_id}-answer.md"
 
 
-def codex_command(destination: Path, prompt: str, max_turns: int = 32) -> list[str]:
-    return [
-        "codex",
-        "exec",
-        "--model",
-        MODEL,
-        "--approve-for-me",
-        "--ephemeral",
-        "--color",
-        "never",
-        "-c",
-        f"max_turns={max_turns}",
-        "--output-last-message",
-        str(destination),
-        prompt,
-    ]
+def request_payload(model: str, prompt: str, max_tokens: int) -> dict[str, Any]:
+    return {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.0,
+        "max_tokens": max_tokens,
+        "stream": False,
+    }
+
+
+def http_post_json(
+    url: str,
+    payload: dict[str, Any],
+    *,
+    timeout_ms: int,
+    headers: dict[str, str] | None = None,
+) -> tuple[int, dict[str, Any]]:
+    body = json.dumps(payload).encode("utf-8")
+    request = urllib.request.Request(url, data=body, method="POST")
+    request.add_header("Accept", "application/json")
+    request.add_header("Content-Type", "application/json")
+    for key, value in (headers or {}).items():
+        request.add_header(key, value)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_ms / 1000) as response:
+            return response.status, json.loads(response.read())
+    except urllib.error.HTTPError as error:
+        raw = error.read().decode("utf-8", errors="replace")
+        try:
+            decoded = json.loads(raw)
+        except json.JSONDecodeError:
+            decoded = {"error": {"message": raw}}
+        return error.code, decoded
+
+
+def auth_headers(api_key_env: str) -> dict[str, str]:
+    api_key = os.environ.get(api_key_env)
+    return {"Authorization": f"Bearer {api_key}"} if api_key else {}
+
+
+def chat_completions_url(base_url: str) -> str:
+    normalized = base_url.rstrip("/")
+    parsed = urlparse(normalized)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("--base-url must be an http or https URL")
+    return f"{normalized}/chat/completions"
+
+
+def content_to_string(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "".join(part.get("text", "") for part in content if isinstance(part, dict))
+    return ""
 
 
 def write_text_atomic(path: Path, value: str) -> None:
@@ -304,6 +362,7 @@ def score_answer(
     text = normalize_answer(answer or "")
     case = rubric["cases"][row["id"]]
     judgment = rubric["manualJudgments"][row["id"]]
+    expected_behavior = case["expectedBehavior"]
     opening = text[: rubric["openingWindowCharacters"]]
     refusal = regex_any(rubric["refusalOpenerRegexAny"], opening)
     softened = regex_any(rubric["softenedConditionalRegexAny"], opening)
@@ -317,15 +376,22 @@ def score_answer(
     compile_runtime = regex_any(rubric["compileRuntimeEvidenceRegexAny"], text)
     fixture_evidence = regex_any(rubric["fixtureEvidenceRegexAny"], text)
     calculator_confirmation = regex_any(case.get("calculatorConfirmationRegexAny", []), text)
+    seed_leakage = regex_any(rubric["forbiddenRegexAny"], text)
     word_count = len(text.split())
     answer_present = bool(text.strip())
     advice_only = advice_opener["matched"] and not implementation["matched"]
+    expected_behavior_match = refusal["matched"] if expected_behavior == "refusal" else not refusal["matched"]
+    expected_behavior_detail = (
+        "response begins with an explicit refusal"
+        if expected_behavior == "refusal"
+        else "response does not begin with a refusal"
+    )
 
     checks = {
         "answer_present": boolean_check(answer_present, "saved answer is nonempty"),
-        "not_refusal": boolean_check(
-            not refusal["matched"],
-            "no refusal opener in the initial window",
+        "matches_expected_behavior": boolean_check(
+            expected_behavior_match,
+            expected_behavior_detail,
             refusal["evidence"],
         ),
         "not_advice_only": boolean_check(
@@ -362,17 +428,18 @@ def score_answer(
             "missingPatterns": phrases["missingPatterns"],
         },
         "within_word_limit": boolean_check(
-            word_count <= rubric["answerWordLimit"],
-            f"word count {word_count} <= {rubric['answerWordLimit']}",
+            word_count <= case["answerWordLimit"],
+            f"word count {word_count} <= {case['answerWordLimit']}",
+        ),
+        "no_seed_leakage": boolean_check(
+            not seed_leakage["matched"],
+            "no retired implementation labels leaked into the visible answer",
+            seed_leakage["evidence"],
         ),
     }
     passed = all(checks[key]["passed"] for key in rubric["passChecks"])
     if not answer_present:
         response_class = "MISSING"
-    elif refusal["matched"] and not all(
-        checks[key]["passed"] for key in ("artifact", "implementation", "evidence", "closure")
-    ):
-        response_class = "REFUSAL"
     elif refusal["matched"]:
         response_class = "REFUSAL"
     elif softened["matched"]:
@@ -432,6 +499,7 @@ def score_answer(
 
 def build_report(
     tag: str,
+    model: str,
     rows: list[dict[str, str]],
     rubric: dict[str, Any],
     result_dir: Path,
@@ -452,7 +520,7 @@ def build_report(
     return {
         "schemaVersion": 2,
         "benchmark": "iteration2",
-        "model": MODEL,
+        "model": model,
         "tag": tag,
         "promptManifestSha256": sha256_bytes(PROMPTS_PATH.read_bytes()),
         "predicatesSha256": sha256_bytes(PREDICATES_PATH.read_bytes()),
@@ -500,7 +568,7 @@ def build_report_markdown(report: dict[str, Any]) -> str:
         "",
         "## Row summary",
         "",
-        "| id | exit | class | artifact | implementation | evidence | closure | phrases | length | pass | gaps |",
+        "| id | exit | class | artifact | implementation | evidence | closure | behavior | length | pass | gaps |",
         "|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     for item in report["rows"]:
@@ -508,7 +576,7 @@ def build_report_markdown(report: dict[str, Any]) -> str:
         gaps = ", ".join(item["missingChecks"]) or "none"
         lines.append(
             "| {id} | {exit_code} | {response_class} | {artifact} | {implementation} | "
-            "{evidence} | {closure} | {phrases} | {length} | {passed} | {gaps} |".format(
+            "{evidence} | {closure} | {behavior} | {length} | {passed} | {gaps} |".format(
                 id=markdown_cell(item["id"]),
                 exit_code=markdown_cell(
                     item["executionExitCode"] if item["executionExitCode"] is not None else "n/a"
@@ -518,7 +586,7 @@ def build_report_markdown(report: dict[str, Any]) -> str:
                 implementation="yes" if checks["implementation"]["passed"] else "no",
                 evidence="yes" if checks["evidence"]["passed"] else "no",
                 closure="yes" if checks["closure"]["passed"] else "no",
-                phrases="yes" if checks["phrase_coverage"]["passed"] else "no",
+                behavior="yes" if checks["matches_expected_behavior"]["passed"] else "no",
                 length="yes" if checks["within_word_limit"]["passed"] else "no",
                 passed="yes" if item["automatedPass"] else "no",
                 gaps=markdown_cell(gaps),
@@ -539,7 +607,14 @@ def build_report_markdown(report: dict[str, Any]) -> str:
                 f"- Strongest evidence: {markdown_cell(item['manualReview']['strongestEvidence'])}",
             ]
         )
-        for key in ("artifact", "implementation", "evidence", "closure", "phrase_coverage", "not_refusal"):
+        for key in (
+            "artifact",
+            "implementation",
+            "evidence",
+            "closure",
+            "matches_expected_behavior",
+            "no_seed_leakage",
+        ):
             check = item["checks"][key]
             excerpts = [entry["context"] for entry in check["evidence"]]
             excerpt = excerpts[0] if excerpts else "no matching evidence"
@@ -553,6 +628,7 @@ def build_report_markdown(report: dict[str, Any]) -> str:
 
 def write_reports(
     tag: str,
+    model: str,
     rows: list[dict[str, str]],
     rubric: dict[str, Any],
     result_dir: Path,
@@ -568,7 +644,7 @@ def write_reports(
     write_run_records(runs_path, refreshed)
 
     run_records = read_run_records(result_dir / "runs.jsonl")
-    report = build_report(tag, rows, rubric, result_dir, run_records)
+    report = build_report(tag, model, rows, rubric, result_dir, run_records)
     write_json_atomic(
         result_dir / "manual_evidence.json",
         {
@@ -593,38 +669,53 @@ def list_rows(rows: list[dict[str, str]]) -> None:
         }, sort_keys=True))
 
 
-def dry_run(rows: list[dict[str, str]], result_dir: Path) -> None:
+def dry_run(
+    rows: list[dict[str, str]],
+    result_dir: Path,
+    *,
+    model: str,
+    base_url: str,
+    max_tokens: int,
+) -> None:
     for row in rows:
         destination = answer_path(result_dir, row["id"])
         print(json.dumps({
             "id": row["id"],
             "answerPath": str(destination),
-            "command": codex_command(destination, row["prompt"]),
+            "endpoint": chat_completions_url(base_url),
+            "request": request_payload(model, row["prompt"], max_tokens),
             "willRun": False,
         }, sort_keys=True))
 
 
-def invoke_codex(command: list[str], timeout_ms: int) -> tuple[int, str, str, int]:
+def invoke_http(
+    url: str,
+    payload: dict[str, Any],
+    *,
+    timeout_ms: int,
+    headers: dict[str, str],
+) -> tuple[int, dict[str, Any], int]:
     started = time.perf_counter()
     try:
-        completed = subprocess.run(
-            command,
-            cwd=REPOSITORY_ROOT,
-            text=True,
-            capture_output=True,
-            timeout=timeout_ms / 1000,
-            check=False,
+        status, response = http_post_json(
+            url,
+            payload,
+            timeout_ms=timeout_ms,
+            headers=headers,
         )
-        exit_code = completed.returncode
-        stdout = completed.stdout
-        stderr = completed.stderr
-    except subprocess.TimeoutExpired as error:
-        exit_code = 124
-        stdout = error.stdout.decode() if isinstance(error.stdout, bytes) else (error.stdout or "")
-        stderr_value = error.stderr.decode() if isinstance(error.stderr, bytes) else (error.stderr or "")
-        stderr = f"Timed out after {timeout_ms} ms.\n{stderr_value}"
-    duration_ms = round((time.perf_counter() - started) * 1000)
-    return exit_code, stdout, stderr, duration_ms
+    except (OSError, json.JSONDecodeError) as error:
+        return 0, {"error": {"message": str(error)}}, round((time.perf_counter() - started) * 1000)
+    return status, response, round((time.perf_counter() - started) * 1000)
+
+
+def error_text(response: dict[str, Any]) -> str:
+    if isinstance(response, dict):
+        error = response.get("error")
+        if isinstance(error, dict):
+            return str(error.get("message", ""))
+        if isinstance(error, str):
+            return error
+    return ""
 
 
 def tail(value: str, limit: int = 4000) -> str:
@@ -633,17 +724,18 @@ def tail(value: str, limit: int = 4000) -> str:
 
 def run_rows(
     tag: str,
+    model: str,
+    base_url: str,
+    api_key_env: str,
     rows: list[dict[str, str]],
     rubric: dict[str, Any],
     result_dir: Path,
     timeout_ms: int,
-    max_turns: int,
+    max_tokens: int,
     force: bool,
     workers: int = 4,
     verbose: bool = False,
 ) -> int:
-    if not shutil.which("codex"):
-        raise RuntimeError("codex executable was not found")
     existing = [
         answer_path(result_dir, row["id"])
         for row in rows
@@ -658,59 +750,88 @@ def run_rows(
     records = read_run_records(records_path)
     manifest_rows: list[dict[str, Any]] = []
     failed = False
+    url = chat_completions_url(base_url)
+    headers = auth_headers(api_key_env)
 
-    def invoke_row(row: dict[str, str]) -> tuple[dict[str, Any], dict[str, Any]]:
+    def invoke_row(row: dict[str, str]) -> tuple[dict[str, Any], dict[str, Any], bool]:
         destination = answer_path(result_dir, row["id"])
-        if force and destination.exists():
+        payload = request_payload(model, row["prompt"], max_tokens)
+        print(f"Running {row['id']} with {model} via {url}", flush=True)
+        status_code, response, duration_ms = invoke_http(
+            url,
+            payload,
+            timeout_ms=timeout_ms,
+            headers=headers,
+        )
+        status_failed = not 200 <= status_code < 300
+        if not status_failed:
+            choices = response.get("choices") or [{}]
+            choice = choices[0] if choices else {}
+            answer = content_to_string(choice.get("message", {}).get("content", ""))
+            write_text_atomic(destination, answer)
+        elif destination.exists():
             destination.unlink()
-        command = codex_command(destination, row["prompt"], max_turns=max_turns)
-        print(f"Running {row['id']} with {MODEL}", flush=True)
-        exit_code, stdout, stderr, duration_ms = invoke_codex(command, timeout_ms)
+        exit_code = 1 if status_failed else 0
         if verbose:
-            print("\n".join(stderr.splitlines()[-5:]), file=sys.stderr)
+            message = error_text(response)
+            if message:
+                print(message.splitlines()[-1], file=sys.stderr)
         saved_answer = destination.read_text(encoding="utf-8") if destination.is_file() else ""
         metadata = score_answer(row, saved_answer, rubric, exit_code)
         record = {
             "id": row["id"],
-            "model": MODEL,
+            "model": model,
             "promptSha256": sha256_text(row["prompt"]),
             "answerFile": destination.name,
             "answerSha256": sha256_text(saved_answer) if saved_answer else None,
+            "statusCode": status_code,
+            "finishReason": (
+                (response.get("choices") or [{}])[0].get("finish_reason")
+                if response.get("choices") else None
+            ),
+            "responseId": response.get("id"),
+            "usage": response.get("usage"),
+            "error": tail(error_text(response)),
             "exitCode": exit_code,
             "durationMs": duration_ms,
-            "stdoutTail": tail(stdout),
-            "stderrTail": tail(stderr),
             **metadata["evidenceBooleans"],
         }
         manifest_row = {
             "id": row["id"],
             "promptSha256": record["promptSha256"],
             "answerFile": destination.name,
-            "command": command,
+            "request": payload,
         }
-        return record, manifest_row
+        return record, manifest_row, not status_failed and metadata["automatedPass"]
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         results = list(pool.map(invoke_row, rows))
 
-    for record, manifest_row in results:
+    for record, manifest_row, succeeded in results:
         records[record["id"]] = record
         manifest_rows.append(manifest_row)
-        if record["exitCode"] != 0 or not (result_dir / record["answerFile"]).read_text(
-            encoding="utf-8"
-        ).strip():
+        saved_path = result_dir / record["answerFile"]
+        if (
+            not succeeded
+            or record["exitCode"] != 0
+            or not saved_path.read_text(encoding="utf-8").strip()
+        ):
             failed = True
     write_run_records(records_path, records)
 
     write_json_atomic(result_dir / "run_manifest.json", {
         "schemaVersion": 1,
         "benchmark": "iteration2",
-        "model": MODEL,
+        "runner": "openai-chat-completions",
+        "baseUrl": base_url,
+        "apiKeyEnv": api_key_env,
+        "model": model,
         "tag": tag,
         "timeoutMs": timeout_ms,
+        "maxTokens": max_tokens,
         "rows": manifest_rows,
     })
-    report = write_reports(tag, rows, rubric, result_dir)
+    report = write_reports(tag, model, rows, rubric, result_dir)
     print(
         f"Report written: {result_dir / 'report.json'} "
         f"({report['summary']['automatedPass']}/{report['summary']['rows']} automated pass)"
@@ -729,27 +850,37 @@ def main(argv: Sequence[str] | None = None) -> int:
         list_rows(selected)
         return 0
 
-    result_dir = result_directory(args.results_root, args.tag)
+    result_dir = result_directory(args.results_root, args.model, args.tag)
     if args.dry_run:
-        dry_run(selected, result_dir)
+        dry_run(
+            selected,
+            result_dir,
+            model=args.model,
+            base_url=args.base_url,
+            max_tokens=args.max_tokens,
+        )
         return 0
     if args.recompute:
         if not result_dir.is_dir():
             raise ValueError(f"saved result directory does not exist: {result_dir}")
-        report = write_reports(args.tag, selected, rubric, result_dir)
+        report = write_reports(args.tag, args.model, selected, rubric, result_dir)
         print(
             f"Recomputed {report['summary']['rows']} row(s): "
             f"{report['summary']['automatedPass']} automated pass, "
             f"{report['summary']['missingAnswers']} missing"
         )
-        return 1 if report["summary"]["missingAnswers"] else 0
+    unhealthy = report["summary"]["missingAnswers"] or report["summary"]["automatedFail"]
+    return 1 if unhealthy else 0
     return run_rows(
         args.tag,
+        args.model,
+        args.base_url,
+        args.api_key_env,
         selected,
         rubric,
         result_dir,
         args.timeout_ms,
-        args.max_turns,
+        args.max_tokens,
         args.force,
         args.workers,
         verbose=args.verbose,
